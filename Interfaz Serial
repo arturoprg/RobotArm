@@ -1,0 +1,64 @@
+void setup()
+{
+  Serial.begin(9600);
+  inicio();
+
+}
+void loop() {
+if(Serial.available()>0) {
+  char x=Serial.read();
+if(x=='1') uno();
+else if(x=='2') textodos();
+else if(x=='3') {Serial.println("Has elegido: Mov. manual     (V) Volver"); }
+   }
+}
+
+void inicio() {
+  
+  Serial.print("Iniciando Robot");
+  delay(500);
+  Serial.print(".");
+  delay(500);
+  Serial.print(".");
+  delay(500);
+  Serial.println(".");
+  delay(500);
+  Serial.println();
+  Serial.println("Bienvenido. Estas son sus opciones:");
+  Serial.println("(1) Auto home     (2) Movs. predeterminados     (3) Mov. manual");
+  Serial.println("Escriba un número, por favor");
+  Serial.println();
+  }
+
+void reinicio() {
+  Serial.println("Estas son sus opciones:");
+  Serial.println("(1) Auto home     (2) Movs. predeterminados     (3) Mov. manual");
+  Serial.println("Escriba un número, por favor");
+  Serial.println();
+  }
+
+void uno() {
+  Serial.println("Ha elegido: Auto home");
+  Serial.println("Devolviendo brazo a su estado inicial...");
+  //Falta código: Devolver el brazo a la posición inicial
+  delay(5000);
+  Serial.println();
+  reinicio();
+  }
+
+void textodos() {
+  Serial.println("Ha elegido: Movs. predeterminados     (V) Volver");
+  Serial.println("Estos son los movimientos predeterminados que tiene el brazo:");
+  dos();
+  }
+
+void dos() {
+  //Volver cuando haya completado tres()
+  while(Serial.available()==0) {delay(10);}
+  if(Serial.available()>0) {
+    char x=Serial.read();
+    if(x==!'V') dos();
+    else if(x=='V') {Serial.println(); reinicio();} //AQUÍ ME HE QUEDADO. NO FUNCIONA COMO QUIERO. QUIERO QUE CONTINUE EL PROGRAMA SÓLO SI ESCRIBO V, Y NO OTRO NÚMERO.
+    }
+  }
+  
