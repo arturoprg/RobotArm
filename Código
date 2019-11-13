@@ -1,1 +1,40 @@
+#include <Servo.h>
 
+Servo servoUno;
+Servo servoDos;
+Servo servoTres;
+Servo servoCuatro;
+Servo servoCinco;
+
+#define pot A0
+int pos;
+int posi=0;
+
+void setup()
+{
+  servoUno.attach(3);
+  servoDos.attach(5);
+  servoTres.attach(6);
+  servoCuatro.attach(9);
+  servoCinco.attach(10);
+  
+  pinMode(pot,INPUT);
+}
+
+void loop()
+{
+
+  pos=analogRead(pot);
+  while (abs(pos-analogRead(pot))<10){delay(10);}
+  // prueba();
+  pos=map(pos,0,1023,0,180);
+  servoUno.write(pos);
+  delay(2000);
+  servoDos.write(pos);
+  delay(2000);
+  servoTres.write(pos);
+  delay(2000); 
+  servoCuatro.write(pos);
+  delay(2000);
+  servoCinco.write(pos);
+}
