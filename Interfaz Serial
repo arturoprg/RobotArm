@@ -1,3 +1,5 @@
+char y=0;
+
 void setup()
 {
   Serial.begin(9600);
@@ -6,10 +8,12 @@ void setup()
 }
 void loop() {
 if(Serial.available()>0) {
-  char x=Serial.read();
-if(x=='1') uno();
-else if(x=='2') textodos();
-else if(x=='3') {Serial.println("Has elegido: Mov. manual     (V) Volver"); }
+ y=Serial.read();
+ if(y=='1') uno();
+ else if(y=='2') textodos();
+ while(y=='2') dos();
+ if(y=='3') textotres();
+ while(y=='3') tres();
    }
 }
 
@@ -54,11 +58,29 @@ void textodos() {
 
 void dos() {
   //Volver cuando haya completado tres()
-  while(Serial.available()==0) {delay(10);}
   if(Serial.available()>0) {
     char x=Serial.read();
     if(x==!'V') dos();
-    else if(x=='V') {Serial.println(); reinicio();} //AQUÍ ME HE QUEDADO. NO FUNCIONA COMO QUIERO. QUIERO QUE CONTINUE EL PROGRAMA SÓLO SI ESCRIBO V, Y NO OTRO NÚMERO.
+    else if(x=='V') {Serial.println(); y=0; reinicio();}
     }
   }
-  
+ 
+void textotres() {
+  Serial.println("Ha elegido: Mov. manual     (V) Volver");
+  Serial.println("Elija un servomotor para asignar un valor");
+  Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5");
+  }
+
+void tres() {
+  if(Serial.available()>0) {
+    char x=Serial.read();
+    //LA HE LIADO AQUÍ ABAJO, YA SEGUIRÉ
+    if(x=='1') {Serial.println(); Serial.println("Ha elegido '1'. Asigne un valor, por favor.");
+                while(x=='1') {if(Serial.available()>0 {Serial.println("Imprimiendo..."); int z=Serial.read(); x=0; Serial.println(); Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5");}
+    else if(x=='2') {Serial.println(); Serial.println("Ha elegido '2'. Asigne un valor, por favor.");}
+    else if(x=='3') {Serial.println(); Serial.println("Ha elegido '3'. Asigne un valor, por favor.");}
+    else if(x=='4') {Serial.println(); Serial.println("Ha elegido '4'. Asigne un valor, por favor.");}
+    else if(x=='5') {Serial.println(); Serial.println("Ha elegido '5'. Asigne un valor, por favor.");}
+    else if(x=='V') {Serial.println(); y=0; reinicio();}  
+      }  
+  }
