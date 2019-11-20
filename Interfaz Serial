@@ -1,3 +1,5 @@
+//EL MONITOR SERIE ESTÁ ACABADO
+
 char y=0;
 
 void setup()
@@ -74,13 +76,101 @@ void textotres() {
 void tres() {
   if(Serial.available()>0) {
     char x=Serial.read();
-    //LA HE LIADO AQUÍ ABAJO, YA SEGUIRÉ
     if(x=='1') {Serial.println(); Serial.println("Ha elegido '1'. Asigne un valor, por favor.");
-                while(x=='1') {if(Serial.available()>0 {Serial.println("Imprimiendo..."); int z=Serial.read(); x=0; Serial.println(); Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5");}
-    else if(x=='2') {Serial.println(); Serial.println("Ha elegido '2'. Asigne un valor, por favor.");}
-    else if(x=='3') {Serial.println(); Serial.println("Ha elegido '3'. Asigne un valor, por favor.");}
-    else if(x=='4') {Serial.println(); Serial.println("Ha elegido '4'. Asigne un valor, por favor.");}
-    else if(x=='5') {Serial.println(); Serial.println("Ha elegido '5'. Asigne un valor, por favor.");}
-    else if(x=='V') {Serial.println(); y=0; reinicio();}  
-      }  
-  }
+                while(x=='1') {
+                  if(Serial.available()>0) {
+                    char x=0;
+                    int centenas=Serial.read();
+                    delay(50);
+                    int decimas=Serial.read();
+                    delay(50);
+                    int unidades=Serial.read();
+                    delay(50);
+                    Serial.println("Imprimiendo...");
+                    delay(1000);
+                    Serial.println();
+                    Serial.println("Elija otro servomotor si desea     (V) Volver");
+                    Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5");
+                    tres();
+                    }
+                  }
+                }
+  if(x=='2') {Serial.println(); Serial.println("Ha elegido '2'. Asigne un valor, por favor.");
+                while(x=='2') {
+                  if(Serial.available()>0) {
+                    char x=0;
+                    int centenas=Serial.read();
+                    delay(50);
+                    int decimas=Serial.read();
+                    delay(50);
+                    int unidades=Serial.read();
+                    delay(50);
+                    Serial.println("Imprimiendo...");
+                    delay(1000);
+                    Serial.println();
+                    Serial.println("Elija otro servomotor si desea     (V) Volver");
+                    Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5");
+                    tres();
+                    }
+                  }
+                }
+if(x=='3') {Serial.println(); Serial.println("Ha elegido '3'. Asigne un valor, por favor.");
+                while(x=='3') {
+                  if(Serial.available()>0) {
+                    char x=0;
+                    int centenas=Serial.read();
+                    delay(50);
+                    int decimas=Serial.read();
+                    delay(50);
+                    int unidades=Serial.read();
+                    delay(50);
+                    Serial.println("Imprimiendo...");
+                    delay(1000);
+                    Serial.println();
+                    Serial.println("Elija otro servomotor si desea     (V) Volver");
+                    Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5");
+                    tres();
+                    }
+                  }
+                }
+if(x=='4') {Serial.println(); Serial.println("Ha elegido '4'. Asigne un valor, por favor.");
+                while(x=='4') {
+                  if(Serial.available()>0) {
+                    char x=0;
+                    int centenas=Serial.read();
+                    delay(50);
+                    int decimas=Serial.read();
+                    delay(50);
+                    int unidades=Serial.read();
+                    delay(50);
+                    Serial.println("Imprimiendo...");
+                    delay(1000);
+                    Serial.println();
+                    Serial.println("Elija otro servomotor si desea     (V) Volver");
+                    Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5");
+                    tres();
+                    }
+                  }
+                }
+if(x=='5') {Serial.println(); Serial.println("Ha elegido '5'. Asigne un valor, por favor.");
+                while(x=='5') {
+                  if(Serial.available()>0) {
+                    char x=0;
+                    int centenas=Serial.read();
+                    delay(50);
+                    int decimas=Serial.read();
+                    delay(50);
+                    int unidades=Serial.read();
+                    delay(50);
+                    Serial.println("Imprimiendo...");
+                    delay(1000);
+                    Serial.println();
+                    Serial.println("Elija otro servomotor si desea     (V) Volver");
+                    Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5");
+                    tres();
+                    }
+                  }
+                }
+    if(x=='V') {Serial.println(); y=0; reinicio();}
+   }
+}
