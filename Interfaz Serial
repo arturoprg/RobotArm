@@ -1,10 +1,22 @@
 //EL MONITOR SERIE ESTÁ ACABADO
+#include <Servo.h>
+
+Servo ServoUno;
+Servo ServoDos;
+Servo ServoTres;
+Servo ServoCuatro;
+Servo ServoCinco;
 
 char y=0;
 
 void setup()
 {
   Serial.begin(9600);
+  ServoUno.attach(3);
+  ServoDos.attach(5);
+  ServoTres.attach(6);
+  ServoCuatro.attach(9);
+  ServoCinco.attach(10);
   inicio();
 
 }
@@ -55,6 +67,7 @@ void uno() {
 void textodos() {
   Serial.println("Ha elegido: Movs. predeterminados     (V) Volver");
   Serial.println("Estos son los movimientos predeterminados que tiene el brazo:");
+  Serial.println("No hay movimientos disponibles, desgraciadamente");
   dos();
   }
 
@@ -76,17 +89,23 @@ void textotres() {
 void tres() {
   if(Serial.available()>0) {
     char x=Serial.read();
-    if(x=='1') {Serial.println(); Serial.println("Ha elegido '1'. Asigne un valor, por favor.");
+    if(x=='1') {Serial.println(); Serial.println("Ha elegido '1'. Asigne un valor, por favor."); Serial.end(); Serial.begin(9600);
                 while(x=='1') {
-                  if(Serial.available()>0) {
-                    char x=0;
+                   if(Serial.available()>0) {
+                    x=0;
+                    int total;
                     int centenas=Serial.read();
+                    centenas=centenas-48;
                     delay(50);
-                    int decimas=Serial.read();
+                    int decenas=Serial.read();
                     delay(50);
                     int unidades=Serial.read();
+                    if(unidades==10) total=centenas*10+decenas;
+                    else if(decenas==10) total=centenas;
+                    else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
                     delay(50);
                     Serial.println("Imprimiendo...");
+                    ServoCinco.write(total);
                     delay(1000);
                     Serial.println();
                     Serial.println("Elija otro servomotor si desea     (V) Volver");
@@ -95,17 +114,23 @@ void tres() {
                     }
                   }
                 }
-  if(x=='2') {Serial.println(); Serial.println("Ha elegido '2'. Asigne un valor, por favor.");
+  if(x=='2') {Serial.println(); Serial.println("Ha elegido '2'. Asigne un valor, por favor."); Serial.end(); Serial.begin(9600);
                 while(x=='2') {
-                  if(Serial.available()>0) {
-                    char x=0;
+                    if(Serial.available()>0) {
+                    x=0;
+                    int total;
                     int centenas=Serial.read();
+                    centenas=centenas-48;
                     delay(50);
-                    int decimas=Serial.read();
+                    int decenas=Serial.read();
                     delay(50);
                     int unidades=Serial.read();
+                    if(unidades==10) total=centenas*10+decenas;
+                    else if(decenas==10) total=centenas;
+                    else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
                     delay(50);
                     Serial.println("Imprimiendo...");
+                    ServoCinco.write(total);
                     delay(1000);
                     Serial.println();
                     Serial.println("Elija otro servomotor si desea     (V) Volver");
@@ -114,17 +139,23 @@ void tres() {
                     }
                   }
                 }
-if(x=='3') {Serial.println(); Serial.println("Ha elegido '3'. Asigne un valor, por favor.");
+if(x=='3') {Serial.println(); Serial.println("Ha elegido '3'. Asigne un valor, por favor."); Serial.end(); Serial.begin(9600);
                 while(x=='3') {
-                  if(Serial.available()>0) {
-                    char x=0;
+                   if(Serial.available()>0) {
+                    x=0;
+                    int total;
                     int centenas=Serial.read();
+                    centenas=centenas-48;
                     delay(50);
-                    int decimas=Serial.read();
+                    int decenas=Serial.read();
                     delay(50);
                     int unidades=Serial.read();
+                    if(unidades==10) total=centenas*10+decenas;
+                    else if(decenas==10) total=centenas;
+                    else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
                     delay(50);
                     Serial.println("Imprimiendo...");
+                    ServoCinco.write(total);
                     delay(1000);
                     Serial.println();
                     Serial.println("Elija otro servomotor si desea     (V) Volver");
@@ -133,36 +164,48 @@ if(x=='3') {Serial.println(); Serial.println("Ha elegido '3'. Asigne un valor, p
                     }
                   }
                 }
-if(x=='4') {Serial.println(); Serial.println("Ha elegido '4'. Asigne un valor, por favor.");
+if(x=='4') {Serial.println(); Serial.println("Ha elegido '4'. Asigne un valor, por favor."); Serial.end(); Serial.begin(9600);
                 while(x=='4') {
-                  if(Serial.available()>0) {
-                    char x=0;
+                     if(Serial.available()>0) {
+                    x=0;
+                    int total;
                     int centenas=Serial.read();
+                    centenas=centenas-48;
                     delay(50);
-                    int decimas=Serial.read();
+                    int decenas=Serial.read();
                     delay(50);
                     int unidades=Serial.read();
+                    if(unidades==10) total=centenas*10+decenas;
+                    else if(decenas==10) total=centenas;
+                    else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
                     delay(50);
                     Serial.println("Imprimiendo...");
+                    ServoCinco.write(total);
                     delay(1000);
                     Serial.println();
                     Serial.println("Elija otro servomotor si desea     (V) Volver");
                     Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5");
                     tres();
-                    }
                   }
                 }
-if(x=='5') {Serial.println(); Serial.println("Ha elegido '5'. Asigne un valor, por favor.");
+              }
+if(x=='5') {Serial.println(); Serial.println("Ha elegido '5'. Asigne un valor, por favor."); Serial.end(); Serial.begin(9600);
                 while(x=='5') {
-                  if(Serial.available()>0) {
-                    char x=0;
+                    if(Serial.available()>0) {
+                    x=0;
+                    int total;
                     int centenas=Serial.read();
+                    centenas=centenas-48;
                     delay(50);
-                    int decimas=Serial.read();
+                    int decenas=Serial.read();
                     delay(50);
                     int unidades=Serial.read();
+                    if(unidades==10) total=centenas*10+decenas;
+                    else if(decenas==10) total=centenas;
+                    else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
                     delay(50);
                     Serial.println("Imprimiendo...");
+                    ServoCinco.write(total);
                     delay(1000);
                     Serial.println();
                     Serial.println("Elija otro servomotor si desea     (V) Volver");
