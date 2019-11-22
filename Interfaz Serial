@@ -1,4 +1,4 @@
-//EL MONITOR SERIE ESTÁ ACABADO
+//ACTUALIZACIÓN 22/11 - Auto home finalizado. Robusted: Sólo valores entre 0 y 180. Recuerda dónde se posicionaba anteriormente.
 #include <Servo.h>
 
 Servo ServoUno;
@@ -18,7 +18,7 @@ int antiguo6=0;
 char y=0;
 
 void setup()
-{ //PONER PAL 7
+{
   Serial.begin(9600);
   ServoUno.attach(2);
   ServoDos.attach(3);
@@ -27,8 +27,8 @@ void setup()
   ServoCinco.attach(6);
   ServoSeis.attach(7);
   inicio();
-
 }
+
 void loop() {
 if(Serial.available()>0) {
  y=Serial.read();
@@ -65,15 +65,15 @@ void reinicio() {
   Serial.println();
   }
 
-void uno() { //ARREGLAR ESTO
+void uno() {
   Serial.println("Ha elegido: Auto home");
   Serial.println("Devolviendo brazo a su estado inicial...");
   for(int i=0; antiguo1>0; antiguo1--) {ServoUno.write(antiguo1); delay(20);}
-  for(int i=0; antiguo2>0; antiguo1--) {ServoUno.write(antiguo2); delay(20);}
-  for(int i=0; antiguo3>0; antiguo1--) {ServoUno.write(antiguo3); delay(20);}
-  for(int i=0; antiguo4>0; antiguo1--) {ServoUno.write(antiguo4); delay(20);}
-  for(int i=0; antiguo5>0; antiguo1--) {ServoUno.write(antiguo5); delay(20);}
-  for(int i=0; antiguo6>0; antiguo1--) {ServoUno.write(antiguo6); delay(20);}
+  for(int i=0; antiguo2>0; antiguo2--) {ServoUno.write(antiguo2); delay(20);}
+  for(int i=0; antiguo3>0; antiguo3--) {ServoUno.write(antiguo3); delay(20);}
+  for(int i=0; antiguo4>0; antiguo4--) {ServoUno.write(antiguo4); delay(20);}
+  for(int i=0; antiguo5>0; antiguo5--) {ServoUno.write(antiguo5); delay(20);}
+  for(int i=0; antiguo6>0; antiguo6--) {ServoUno.write(antiguo6); delay(20);}
   Serial.println();
   reinicio();
   }
@@ -105,30 +105,6 @@ void tres() {
     char x=Serial.read();
     if(x=='1') {Serial.println(); Serial.print("Ha elegido '1'. Ahora mismo su posición es: "); Serial.println(antiguo1); Serial.end(); Serial.begin(9600);
                 while(x=='1') {
-                   if(Serial.available()>0) {
-                    x=0;
-                    int total;
-                    int centenas=Serial.read(); delay(50);
-                    centenas=centenas-48;
-                    int decenas=Serial.read(); delay(50);
-                    int unidades=Serial.read(); delay(50);
-                    if(unidades==10) {decenas=decenas-48; total=centenas*10+decenas;}
-                    else if(decenas==10) total=centenas;
-                    else if(centenas==10) {Serial.println("¡No ha escrito un número!"); x='1';}
-                    else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
-                    Serial.print("Imprimiendo el valor "); Serial.println(total);
-                    if(antiguo1<total) {for(int i=0; antiguo1<total; antiguo1++) {ServoUno.write(antiguo1); delay(20);}}
-                    else {for(int i=0; antiguo1>total; antiguo1--) {ServoUno.write(antiguo1); delay(20);}} 
-                    delay(1000);
-                    Serial.println();
-                    Serial.println("Elija otro servomotor si desea     (V) Volver");
-                    Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5     (6) 6");
-                    tres();
-                    }
-                  }
-                }
-  if(x=='2') {Serial.println(); Serial.println("Ha elegido '2'. Asigne un valor, por favor."); Serial.end(); Serial.begin(9600);
-                while(x=='2') {
                       if(Serial.available()>0) {
                     x=0;
                     int total;
@@ -140,10 +116,11 @@ void tres() {
                     else if(decenas==10) total=centenas;
                     else if(centenas==10) {Serial.println("¡No ha escrito un número!"); x='1';}
                     else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
-                    Serial.print("Imprimiendo el valor "); Serial.println(total);
-                    if(antiguo2<total) {for(int i=0; antiguo2<total; antiguo2++) {ServoUno.write(antiguo2); delay(20);}}
-                    else {for(int i=0; antiguo2>total; antiguo2--) {ServoUno.write(antiguo2); delay(20);}} 
-                    delay(1000);
+                    if(total<=180) {Serial.print("Imprimiendo el valor: "); Serial.println(total);
+                    if(antiguo1<total) {for(int i=0; antiguo1<total; antiguo1++) {ServoUno.write(antiguo1); delay(20);}}
+                    else {for(int i=0; antiguo1>total; antiguo1--) {ServoUno.write(antiguo1); delay(20);}} 
+                    delay(1000);}
+                    else {Serial.println("¡Sólo entre 0 y 180!");}
                     Serial.println();
                     Serial.println("Elija otro servomotor si desea     (V) Volver");
                     Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5     (6) 6");
@@ -151,32 +128,8 @@ void tres() {
                     }
                   }
                 }
-if(x=='3') {Serial.println(); Serial.println("Ha elegido '3'. Asigne un valor, por favor."); Serial.end(); Serial.begin(9600);
-                while(x=='3') {
-                    if(Serial.available()>0) {
-                    x=0;
-                    int total;
-                    int centenas=Serial.read(); delay(50);
-                    centenas=centenas-48;
-                    int decenas=Serial.read(); delay(50);
-                    int unidades=Serial.read(); delay(50);
-                    if(unidades==10) {decenas=decenas-48; total=centenas*10+decenas;}
-                    else if(decenas==10) total=centenas;
-                    else if(centenas==10) {Serial.println("¡No ha escrito un número!"); x='1';}
-                    else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
-                    Serial.print("Imprimiendo el valor "); Serial.println(total);
-                    if(antiguo3<total) {for(int i=0; antiguo3<total; antiguo3++) {ServoUno.write(antiguo3); delay(20);}}
-                    else {for(int i=0; antiguo3>total; antiguo3--) {ServoUno.write(antiguo3); delay(20);}} 
-                    delay(1000);
-                    Serial.println();
-                    Serial.println("Elija otro servomotor si desea     (V) Volver");
-                    Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5     (6) 6");
-                    tres();
-                    }
-                  }
-                }
-if(x=='4') {Serial.println(); Serial.println("Ha elegido '4'. Asigne un valor, por favor."); Serial.end(); Serial.begin(9600);
-                while(x=='4') {
+  if(x=='2') {Serial.println(); Serial.print("Ha elegido '2'. Ahora mismo su posición es: "); Serial.println(antiguo2); Serial.end(); Serial.begin(9600);
+                while(x=='2') {
                        if(Serial.available()>0) {
                     x=0;
                     int total;
@@ -186,12 +139,13 @@ if(x=='4') {Serial.println(); Serial.println("Ha elegido '4'. Asigne un valor, p
                     int unidades=Serial.read(); delay(50);
                     if(unidades==10) {decenas=decenas-48; total=centenas*10+decenas;}
                     else if(decenas==10) total=centenas;
-                    else if(centenas==10) {Serial.println("¡No ha escrito un número!"); x='1';}
+                    else if(centenas==10) {Serial.println("¡No ha escrito un número!"); x='2';}
                     else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
-                    Serial.print("Imprimiendo el valor "); Serial.println(total);
-                    if(antiguo4<total) {for(int i=0; antiguo4<total; antiguo4++) {ServoUno.write(antiguo4); delay(20);}}
-                    else {for(int i=0; antiguo4>total; antiguo4--) {ServoUno.write(antiguo4); delay(20);}} 
-                    delay(1000);
+                    if(total<=180) {Serial.print("Imprimiendo el valor: "); Serial.println(total);
+                    if(antiguo2<total) {for(int i=0; antiguo2<total; antiguo2++) {ServoDos.write(antiguo2); delay(20);}}
+                    else {for(int i=0; antiguo2>total; antiguo2--) {ServoDos.write(antiguo2); delay(20);}} 
+                    delay(1000);}
+                    else {Serial.println("¡Sólo entre 0 y 180!");}
                     Serial.println();
                     Serial.println("Elija otro servomotor si desea     (V) Volver");
                     Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5     (6) 6");
@@ -199,7 +153,57 @@ if(x=='4') {Serial.println(); Serial.println("Ha elegido '4'. Asigne un valor, p
                     }
                   }
                 }
-if(x=='5') {Serial.println(); Serial.println("Ha elegido '5'. Asigne un valor, por favor."); Serial.end(); Serial.begin(9600);
+if(x=='3') {Serial.println(); Serial.print("Ha elegido '3'. Ahora mismo su posición es: "); Serial.println(antiguo3); Serial.end(); Serial.begin(9600);
+                while(x=='3') {
+                     if(Serial.available()>0) {
+                    x=0;
+                    int total;
+                    int centenas=Serial.read(); delay(50);
+                    centenas=centenas-48;
+                    int decenas=Serial.read(); delay(50);
+                    int unidades=Serial.read(); delay(50);
+                    if(unidades==10) {decenas=decenas-48; total=centenas*10+decenas;}
+                    else if(decenas==10) total=centenas;
+                    else if(centenas==10) {Serial.println("¡No ha escrito un número!"); x='3';}
+                    else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
+                    if(total<=180) {Serial.print("Imprimiendo el valor: "); Serial.println(total);
+                    if(antiguo3<total) {for(int i=0; antiguo3<total; antiguo3++) {ServoTres.write(antiguo3); delay(20);}}
+                    else {for(int i=0; antiguo3>total; antiguo3--) {ServoTres.write(antiguo3); delay(20);}} 
+                    delay(1000);}
+                    else {Serial.println("¡Sólo entre 0 y 180!");}
+                    Serial.println();
+                    Serial.println("Elija otro servomotor si desea     (V) Volver");
+                    Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5     (6) 6");
+                    tres();
+                    }
+                  }
+                }
+if(x=='4') {Serial.println(); Serial.print("Ha elegido '4'. Ahora mismo su posición es: "); Serial.println(antiguo4); Serial.end(); Serial.begin(9600);
+                while(x=='4') {
+                        if(Serial.available()>0) {
+                    x=0;
+                    int total;
+                    int centenas=Serial.read(); delay(50);
+                    centenas=centenas-48;
+                    int decenas=Serial.read(); delay(50);
+                    int unidades=Serial.read(); delay(50);
+                    if(unidades==10) {decenas=decenas-48; total=centenas*10+decenas;}
+                    else if(decenas==10) total=centenas;
+                    else if(centenas==10) {Serial.println("¡No ha escrito un número!"); x='4';}
+                    else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
+                    if(total<=180) {Serial.print("Imprimiendo el valor: "); Serial.println(total);
+                    if(antiguo4<total) {for(int i=0; antiguo4<total; antiguo4++) {ServoCuatro.write(antiguo4); delay(20);}}
+                    else {for(int i=0; antiguo4>total; antiguo4--) {ServoCuatro.write(antiguo4); delay(20);}} 
+                    delay(1000);}
+                    else {Serial.println("¡Sólo entre 0 y 180!");}
+                    Serial.println();
+                    Serial.println("Elija otro servomotor si desea     (V) Volver");
+                    Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5     (6) 6");
+                    tres();
+                    }
+                  }
+                }
+if(x=='5') {Serial.println(); Serial.print("Ha elegido '5'. Ahora mismo su posición es: "); Serial.println(antiguo5); Serial.end(); Serial.begin(9600);
                 while(x=='5') {
                       if(Serial.available()>0) {
                     x=0;
@@ -210,12 +214,13 @@ if(x=='5') {Serial.println(); Serial.println("Ha elegido '5'. Asigne un valor, p
                     int unidades=Serial.read(); delay(50);
                     if(unidades==10) {decenas=decenas-48; total=centenas*10+decenas;}
                     else if(decenas==10) total=centenas;
-                    else if(centenas==10) {Serial.println("¡No ha escrito un número!"); x='1';}
+                    else if(centenas==10) {Serial.println("¡No ha escrito un número!"); x='5';}
                     else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
-                    Serial.print("Imprimiendo el valor "); Serial.println(total);
-                    if(antiguo5<total) {for(int i=0; antiguo5<total; antiguo5++) {ServoUno.write(antiguo5); delay(20);}}
-                    else {for(int i=0; antiguo5>total; antiguo5--) {ServoUno.write(antiguo5); delay(20);}} 
-                    delay(1000);
+                    if(total<=180) {Serial.print("Imprimiendo el valor: "); Serial.println(total);
+                    if(antiguo5<total) {for(int i=0; antiguo5<total; antiguo5++) {ServoCinco.write(antiguo5); delay(20);}}
+                    else {for(int i=0; antiguo5>total; antiguo5--) {ServoCinco.write(antiguo5); delay(20);}} 
+                    delay(1000);}
+                    else {Serial.println("¡Sólo entre 0 y 180!");}
                     Serial.println();
                     Serial.println("Elija otro servomotor si desea     (V) Volver");
                     Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5     (6) 6");
@@ -223,9 +228,9 @@ if(x=='5') {Serial.println(); Serial.println("Ha elegido '5'. Asigne un valor, p
                     }
                   }
                 }
-if(x=='6') {Serial.println(); Serial.println("Ha elegido '6'. Asigne un valor, por favor."); Serial.end(); Serial.begin(9600);
+if(x=='6') {Serial.println(); Serial.println("Ha elegido '6'. Ahora mismo su posición es: "); Serial.println(antiguo6); Serial.end(); Serial.begin(9600);
                 while(x=='6') {
-                      if(Serial.available()>0) {
+                     if(Serial.available()>0) {
                     x=0;
                     int total;
                     int centenas=Serial.read(); delay(50);
@@ -234,12 +239,13 @@ if(x=='6') {Serial.println(); Serial.println("Ha elegido '6'. Asigne un valor, p
                     int unidades=Serial.read(); delay(50);
                     if(unidades==10) {decenas=decenas-48; total=centenas*10+decenas;}
                     else if(decenas==10) total=centenas;
-                    else if(centenas==10) {Serial.println("¡No ha escrito un número!"); x='1';}
+                    else if(centenas==10) {Serial.println("¡No ha escrito un número!"); x='6';}
                     else {unidades=unidades-48; decenas=decenas-48; total=centenas*100+decenas*10+unidades;}
-                    Serial.print("Imprimiendo el valor "); Serial.println(total);
-                    if(antiguo6<total) {for(int i=0; antiguo6<total; antiguo6++) {ServoUno.write(antiguo6); delay(20);}}
-                    else {for(int i=0; antiguo6>total; antiguo6--) {ServoUno.write(antiguo6); delay(20);}} 
-                    delay(1000);
+                    if(total<=180) {Serial.print("Imprimiendo el valor: "); Serial.println(total);
+                    if(antiguo6<total) {for(int i=0; antiguo6<total; antiguo6++) {ServoSeis.write(antiguo6); delay(20);}}
+                    else {for(int i=0; antiguo6>total; antiguo6--) {ServoSeis.write(antiguo6); delay(20);}} 
+                    delay(1000);}
+                    else {Serial.println("¡Sólo entre 0 y 180!");}
                     Serial.println();
                     Serial.println("Elija otro servomotor si desea     (V) Volver");
                     Serial.println("(1) 1     (2) 2     (3) 3     (4) 4     (5) 5     (6) 6");
