@@ -1,0 +1,194 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// Control de Brazo robot ////////////// By Arturo///////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* Objetivo: Este programa sirve para controlar via BlueTooth el Brazo Robot
+ * Funcionamiento: Primero nos encontraremos con un menu donde puedes pasar de un modo a otro moviendo el Joystick a la derecha e
+ *    izquierda. Para seleccionnar el modo, lo buscamos en el menu y pulsamos el Joystick, hecho se iniciará el modo seleccionado.
+ *    Subir y bajar el Joystick sirve para variar la posicion en algunos modos.
+ *    Para salir de un modo de Control, pulsar de nuevo el Joystick.
+ *  
+ *  Conexiones:
+ *              LCD_I2C                     Joystick
+ *                    SCL -> Pin A5               VRx -> Pin A1
+ *                    SDA -> Pin A4               VRy -> Pin A0
+ *                                                SW  -> Pin 3
+ */
+
+
+#include <Wire.h>               //Biblioteca para I2C
+#include <LiquidCrystal_I2C.h>  //Biblioteca para LCD con I2C
+
+LiquidCrystal_I2C lcd(0x27, 16, 2); //Configuramos la LCD
+
+#define ejeX A1
+#define ejeY A0
+#define boton 3
+
+bool B;
+bool ValorBoton;
+bool Ejecutando;
+bool ControlTotal;
+bool Z;
+
+byte posicion[7]={0,10,120,10,60,4,0};//Posicion de Control
+byte state; //Numero del modo en el que se encuentra
+byte v;
+
+const char *Texto[4]={"Posicion Inicial","Descanso        ","Control Total   ","Control Manual  "};  //Modos de funcionamiento
+const char *Miembro[6]={"Base            ","Hombro          ","Codo            ","M. Giro         ","M. Subir Bajar  ","Pinza           "};
+const char *textoAux; //Puntero auxiliar
+const char *textoAux2; //Puntero auxiliar
+
+void setup() {
+  pinMode(boton,INPUT_PULLUP);
+  Serial.begin(9600);
+
+  //Iniciamos la LCD
+  lcd.begin();
+  lcd.backlight();
+  lcd.setCursor(0,0);
+  lcd.print(Texto[0]);
+}
+
+void loop() {
+  if (digitalRead(boton) && !Ejecutando) MenuModo();
+  if (!digitalRead(boton)) B=1;
+  if (B==1 && digitalRead(boton) && !Ejecutando) {
+    Cargando(); 
+    B=0;
+  }
+  while (Ejecutando && state==3) Control(); //Se ejecuta el ControlManual hasta que se pulse el Joystick
+  while (Ejecutando && state==2) {ControlTotal=1; Control();} //Se ejecuta el ControlTotal hasta que se pulse el Joystick
+  if (Ejecutando && state==1){
+    lcd.setCursor(0,1);
+    lcd.print("           ");
+    while (Ejecutando && state==1) Descanso(); //Se ejecuta el ControlTotal hasta que se pulse el Joystick
+  }
+}
+
+ void MenuModo(){ //escribe en la LCD el Modo en el que se encuentra
+  if(analogRead(ejeX)>=1000){  //Cuando mueves el Joystick a la derecha se mueve a un estado anterior
+    textoAux2=Texto[state];
+    if (state--==0) state=sizeof(Texto)/2-1;  //Si state es 0, se pone en el valor máximo del vector Modo, sino, reduce su valor
+    textoAux=Texto[state];              //Guarda el texto del modo en el que esta para editarlo
+    //Mueve el texto hacia la derecha
+    for (int i=0;i<=16;i++){
+      lcd.setCursor(i,0);
+      lcd.print(textoAux2);
+      lcd.setCursor(i-1,0);
+      lcd.print(textoAux[i-1]);
+      delay(10);
+     }
+  }
+  
+  if(analogRead(ejeX)<=20){  //Cuando mueves el Joystick a la izquierda se mueve a un estado posterior
+    if (++state==(sizeof(Texto)/2)) state=0;  //Si state es el maximo, le da valor 0, sino, reduce aumenta su valor
+    //Mueve el texto hacia la izquierda
+    for (int i=16;i>=0;i--){
+      lcd.setCursor(i,0);
+      lcd.print(Texto[state]);
+      delay(10);
+    }
+  }
+ }
+ void Control(){
+  if(!ControlTotal){
+    //Imprime el menu de ControlManual
+    lcd.setCursor(0,0);
+    lcd.print(Miembro[v]);
+  
+    if(analogRead(ejeX)>=1000){  //Cuando mueves el Joystick a la derecha se mueve a un estado anterior
+      if (v--==0) v=5;
+    lcd.setCursor(0,0);
+    lcd.print(Miembro[v]);
+    while (analogRead(ejeX)>1000) {}
+    }
+  
+   if(analogRead(ejeX)<=20){ //Cuando mueves el Joystick a la derecha se mueve a un estado anterior
+      if (++v==6) v=0;
+    lcd.setCursor(0,0);
+    lcd.print(Miembro[v]);
+    while (analogRead(ejeX)<20) {}
+    }
+  }
+  if (ControlTotal) v=6;
+  char ss[20];
+  //Aumenta o Disminuye la posicion
+  lcd.setCursor(0,1);
+  lcd.print("Posicion: ");
+  sprintf(ss,"%03i",posicion[v]);  //Pasamos la distancia a 3 digitos fijos
+  lcd.print(ss);
+  while(analogRead(ejeY)>=524 && posicion[v]<180) AumentarY();
+  while(analogRead(ejeY)<=500 && posicion[v]>0) DisminuirY();
+
+  //Sale de ControlManual
+  if (!digitalRead(boton)) B=1;
+  if (B==1 && digitalRead(boton)){
+    B=0;
+    Ejecutando=0;
+    ControlTotal=0;
+    v=0;
+    Iniciar();
+  }
+}
+
+ void Descanso(){
+  unsigned long tiempo;
+  lcd.setCursor(0,1);
+  for (int i=0;i<16;i++){
+    if (Z) lcd.print("Z");
+    else lcd.print("z");
+    tiempo=millis();
+    while(millis()<tiempo+1000){
+      if (!digitalRead(boton)) B=1;
+      if (B==1 && digitalRead(boton)){
+        B=0;
+        Ejecutando=0;
+        Iniciar();
+      }
+    }
+    if (!Ejecutando) break;
+    Z=!Z;
+  }
+  Z=!Z;
+ }
+
+ void Iniciar(){ //Puente entre un modo y el menu inicial
+    lcd.setCursor(0,0);
+    lcd.print(Texto[state]);
+    lcd.setCursor(0,1);
+    lcd.print("                ");
+ }
+
+ void Cargando(){ //Puente entre el menu y un modo
+   Ejecutando=1;
+   lcd.setCursor(0,1);
+   lcd.print("Cargando");
+    for (byte i=0;i<3;i++){
+      delay(100);
+      lcd.print(".");
+      delay(100);
+    }
+   lcd.setCursor(0,1);
+   lcd.print("Ejecutando      ");
+ }
+
+ void AumentarY(){  //Aumenta la posicion al levantar el eje Y
+  char ss[20];
+  int Aux=map(analogRead(ejeY),1023,512,1,8);
+  posicion[v]++;
+  lcd.setCursor(10,1);
+  sprintf(ss,"%03i",posicion[v]);  //Pasamos la distancia a 3 digitos fijos
+  lcd.print(ss);
+  delay(exp(Aux));
+ }
+
+  void DisminuirY(){  ////Disminuye la posicion al levantar el eje Y
+  char ss[20];
+  int Aux=map(analogRead(ejeY),0,512,1,8);
+  posicion[v]--;
+  lcd.setCursor(10,1);
+  sprintf(ss,"%03i",posicion[v]);  //Pasamos la distancia a 3 digitos fijos
+  lcd.print(ss);
+  delay(exp(Aux));
+ }
