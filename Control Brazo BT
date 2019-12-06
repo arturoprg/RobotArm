@@ -1,0 +1,186 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// Control de Brazo robot // Brazo ////////////// By Arturo//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* Objetivo: Este programa sirve para mover el Brazo Robot
+ * Funcionamiento: Siguiendo las intrucciones del programa del mando, este programa recibira la informacion
+ * necesaria para efectuar de manera precisa el movimiento del brazo y sus distintas funciones.
+ *  
+ *  Conexiones:
+ *              Servos                        HC 05
+ *                    Base        -> 3          TXD -> 2
+ *                    Hombro      -> 5          RXD -> R -> 4
+ *                    Codo        -> 6
+ *                    Muñeca Giro -> 9
+ *                    Muñeca S B  -> 10
+ *                    Pinza       -> 11
+ */
+ 
+#include <SoftwareSerial.h>  //Biblioteca para BT
+#include <Servo.h>           //Biblioteca para Servos
+
+SoftwareSerial BTSerial(2, 4); // RX | TX
+
+Servo SBase;    //Servomotor de la base
+Servo SHombro;  //Servomotor del hombro
+Servo SCodo;    //Servomotor del codo
+Servo SMGiro;   //Servomotor de la muñeca para giro
+Servo SMSB;     //Servomotor de la muñeca para subir y bajar
+Servo SPinza;   //Servomotor de la pinza
+
+bool salir;  //Condicion de salida de un modo
+
+byte posicion[7]={0,10,120,10,60,4,0}; //Posicion del brazo
+ 
+int state;   //Donde se guarda lo que se recibe por BT
+ 
+
+
+void setup() 
+{
+  //Configuramos los servos
+  SBase.attach(3);
+  SHombro.attach(5);
+  SCodo.attach(6);
+  SMGiro.attach(9);
+  SMSB.attach(10);
+  SPinza.attach(11);
+  
+  BTSerial.begin(9600);  //Comenzamos la conexion BT a una velocidad de 9600 Baudios
+  Serial.println("Iniciado");
+}
+ 
+void loop()
+{
+  
+  if (BTSerial.available()){  //Cuando reciba un numero:
+    state=BTSerial.read();    //Guarda el numero recibido
+    salir=false;
+    
+    switch (state-200){       //Se le resta 200 ya que los numeros de los modos se envian a partir del 200
+      case 0:
+        PosicionInicial();    //Se ejecuta el modo de Posicion Inicial
+      break;
+
+      case 1:
+        CogerCaja();          //Se ejecuta el modo de Coger Caja
+      break;
+
+      case 2:
+        Reposo();             //Se ejecuta el modo de Reposo
+      break;
+
+      case 3:
+        ControlTotal();       //Se ejecuta el modo de Control Total
+      break;
+
+      case 4:
+        ControlManual();      //Se ejecuta el modo de Control Manual
+      break;
+
+      case 5:
+        GuardarSecuencia();   //Se ejecuta el modo de Guardar Secuencia
+      break;
+
+      case 6:
+        RepetirSecuencia();   //Se ejecuta el modo de Repetir Secuencia
+      break;
+    }
+    
+  }
+}
+
+void PosicionInicial(){
+  Serial.println("Posicion Inicial");
+  delay(2000);  //Realiza la ejecucion
+  BTSerial.write(1);  //Comunica que ha terminado
+}
+
+void CogerCaja(){
+  Serial.println("Coger Caja");
+  delay(2000);  //Realiza la ejecucion
+  BTSerial.write(1);  //Comunica que ha terminado
+}
+
+void Reposo(){
+  Serial.println("Reposo");
+  delay(2000);  //Realiza la ejecucion
+  BTSerial.write(1);  //Comunica que ha terminado
+  while (salir==false)  //Mientras que no reciba que se ha pulsado el boton, se queda aqui
+    if (BTSerial.available()) salir=BTSerial.read();
+}
+
+void ControlTotal(){
+  Serial.println("Control Total");
+  Serial.println(posicion[6]);
+  while (salir==false){   //Mientras que no reciba que se ha pulsado el boton, se queda aqui
+      if (BTSerial.available()){
+        state=BTSerial.read();
+
+        if (state<=180){  //Si el numero que recibe es menor de 180 es una posicion
+        posicion[6]=state;
+        Serial.println(posicion[6]);
+        }
+        else salir=true;  //Si el numero que recibe es mayor de 180 sale de la funcion
+      }
+  }
+}
+
+void ControlManual(){
+  byte v=0; //Indice del servo que se esta utilizando
+  Serial.println("Control Manual");
+  Serial.println(posicion[0]); //poner todos a su numero
+  while (salir==false){   //Mientras que no reciba que se ha pulsado el boton, se queda aqui
+     if (BTSerial.available()){
+        state=BTSerial.read();
+       if (state<=180){   //Si el numero que recibe es menor de 180 es una posicion
+        posicion[v]=state;
+        switch (v){   //Escribe en el servo correcto
+          case 0:
+          Serial.println("Base");
+          Serial.println(posicion[v]);
+            break;
+
+          case 1:
+          Serial.println("Hombro");
+            Serial.println(posicion[v]);
+            break;
+
+          case 2:
+          Serial.println("Codo");
+            Serial.println(posicion[v]);
+            break;
+
+          case 3:
+          Serial.println("M. Giro");
+            Serial.println(posicion[v]);
+            break;
+
+          case 4:
+          Serial.println("M. Subir Bajar");
+            Serial.println(posicion[v]);
+            break;
+
+          case 5:
+          Serial.println("Pinza");
+            Serial.println(posicion[v]);
+            break;
+       }
+        
+       }
+       else if (state==255) salir=true;   //Si el numero que recibe es 255 sale de la funcion
+       else v=state-181;  //Sino el numero se refiere al servo a utilizar
+     }
+  }
+}
+  
+void GuardarSecuencia(){
+  Serial.println("Guardar Secuencia");
+  delay(2000);
+  BTSerial.write(1);
+}
+
+void RepetirSecuencia(){
+  Serial.println("Repetir Secuencia");
+  delay(2000);
+  BTSerial.write(1);
+}
