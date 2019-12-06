@@ -8,21 +8,24 @@
  *    Para salir de un modo de Control, pulsar de nuevo el Joystick.
  *  
  *  Conexiones:
- *              LCD_I2C                     Joystick
- *                    SCL -> Pin A5               VRx -> Pin A1
- *                    SDA -> Pin A4               VRy -> Pin A0
- *                                                SW  -> Pin 3
+ *              LCD_I2C                     Joystick                HC 05
+ *                    SCL -> Pin A5               VRx -> Pin A1         TXD -> 2
+ *                    SDA -> Pin A4               VRy -> Pin A0         RXD -> R -> 3
+ *                                                SW  -> Pin 4
  */
 
 
 #include <Wire.h>               //Biblioteca para I2C
 #include <LiquidCrystal_I2C.h>  //Biblioteca para LCD con I2C
+#include <SoftwareSerial.h>     //Conexión Serial para el Bluetooth
+
+SoftwareSerial BTSerial(2, 3); // RX | TX
 
 LiquidCrystal_I2C lcd(0x27, 16, 2); //Configuramos la LCD
 
 #define ejeX A1
 #define ejeY A0
-#define boton 3
+#define boton 4
 
 bool B;
 bool ValorBoton;
@@ -42,6 +45,7 @@ const char *textoAux2; //Puntero auxiliar
 void setup() {
   pinMode(boton,INPUT_PULLUP);
   Serial.begin(9600);
+  BTSerial.begin(9600); //Comenzamos la conexion BT a una velocidad de 9600 Baudios
 
   //Iniciamos la LCD
   lcd.begin();
@@ -57,12 +61,22 @@ void loop() {
     Cargando(); 
     B=0;
   }
-  while (Ejecutando && state==3) Control(); //Se ejecuta el ControlManual hasta que se pulse el Joystick
-  while (Ejecutando && state==2) {ControlTotal=1; Control();} //Se ejecuta el ControlTotal hasta que se pulse el Joystick
+
   if (Ejecutando && state==1){
+    BTSerial.write(state);
     lcd.setCursor(0,1);
     lcd.print("           ");
     while (Ejecutando && state==1) Descanso(); //Se ejecuta el ControlTotal hasta que se pulse el Joystick
+  }
+
+  if (Ejecutando && state==2){
+    BTSerial.write(state);
+    while (Ejecutando && state==2) {ControlTotal=1; Control();} //Se ejecuta el ControlTotal hasta que se pulse el Joystick
+  }
+
+  if (Ejecutando && state==3){
+    BTSerial.write(state);
+    while (Ejecutando && state==3) Control(); //Se ejecuta el ControlManual hasta que se pulse el Joystick
   }
 }
 
