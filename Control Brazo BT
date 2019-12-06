@@ -32,7 +32,6 @@ bool salir;  //Condicion de salida de un modo
 byte posicion[7]={0,10,120,10,60,4,0}; //Posicion del brazo
  
 int state;   //Donde se guarda lo que se recibe por BT
- 
 
 
 void setup() 
@@ -44,9 +43,13 @@ void setup()
   SMGiro.attach(9);
   SMSB.attach(10);
   SPinza.attach(11);
+
+  SBase.write(0);
   
   BTSerial.begin(9600);  //Comenzamos la conexion BT a una velocidad de 9600 Baudios
+  Serial.begin(9600);
   Serial.println("Iniciado");
+  
 }
  
 void loop()
@@ -90,8 +93,11 @@ void loop()
 }
 
 void PosicionInicial(){
+  byte vector[7]={180,180,180,180,180,180,180};
   Serial.println("Posicion Inicial");
-  delay(2000);  //Realiza la ejecucion
+ 
+  moverServos(vector);
+  
   BTSerial.write(1);  //Comunica que ha terminado
 }
 
@@ -183,4 +189,40 @@ void RepetirSecuencia(){
   Serial.println("Repetir Secuencia");
   delay(2000);
   BTSerial.write(1);
+}
+
+void moverServos(byte v[]){
+  byte desde[6];
+  byte hasta[6];
+  for (int i=0;i<6;i++){
+    desde[i]=posicion[i];
+    hasta[i]=v[i];
+  }
+  while(!compararArray(desde, hasta)){
+    Serial.println("while");
+    for (int i=0; i<6;i++){
+      if (desde[i]!=hasta[i]){
+        if (desde[i]-hasta[i]<0)  desde[i]++;
+        if (desde[i]-hasta[i]>0)  desde[i]--;
+        switch (i){
+          case 0: SBase.write(desde[i]);  break;
+          case 1: SHombro.write(desde[i]);  break;
+          case 2: SCodo.write(desde[i]);  break;
+          case 3: SMGiro.write(desde[i]); break;
+          case 4: SMSB.write(desde[i]); break;
+          case 5:  SPinza.write(desde[i]);  break;
+        }
+      }
+   }
+ }
+ for (int i=0;i<6;i++){
+    posicion[i]=hasta[i];
+  }
+} 
+
+boolean compararArray(byte array1[],byte array2[])
+{
+ for (int j=0;j<6;j++)
+    if(array1[j] != array2[j])return(false);
+ return(true);
 }
