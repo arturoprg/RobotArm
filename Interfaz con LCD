@@ -1,11 +1,24 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// Proyecto de Procesadores Integrados /////////////////////////////////////////////////////////////////////
 //////////////////// Control de Brazo robot // Mando ////////////// By Arturo//////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /* Objetivo: Este programa sirve para controlar via BlueTooth el Brazo Robot
  * Funcionamiento: Primero nos encontraremos con un menu donde puedes pasar de un modo a otro moviendo el Joystick a la derecha e
- *    izquierda. Para seleccionnar el modo, lo buscamos en el menu y pulsamos el Joystick, hecho se iniciará el modo seleccionado.
+ *    izquierda. Para seleccionnar el modo, lo buscamos en el menu y pulsamos el Joystick, hecho esto se iniciará el modo seleccionado.
  *    Subir y bajar el Joystick sirve para variar la posicion en algunos modos.
- *    Para salir de un modo de Control, pulsar de nuevo el Joystick.
+ *    Para salir de un modo, pulsar de nuevo el Joystick.
+ * Modos:
+ *    Posicion Inicial: coloca el brazo en la posicion de inicio. Tras terminar el movimiento se veulve a la seleccion de modos.
+ *    Coger Caja: el brazo inicia una secuencia de movimientos que le permitiran coger una caja situada en frente suya. Tras terminar la secuencia
+ *      se veulve a la seleccion de modos.
+ *    Reposo: el brazo se coloca en una posicion de reposo. Una vez alcanzada esta posicion volverá a la posicion de inicio y a la seleccion de modo
+ *      tras presionar el boton.
+ *    Control Manual: Moviendo el joystick a derecha e izquierda podremos ir seleccionando la parte del brazo que deseamos mover y subiendo y bajando
+ *      cambiaremos la posicion de la parte sobre la que estemos en tiempo real.
+ *    Control Total: Este modo es similar al anterior, solo que el brazo se movera simultaneamente a la posicion indicada.
+ *    Guardar Secuencia: Con este modo podemos estableces una secuencia de hasta 5 etapas y la velocidad a la que se alcanza cada etapa. Para ellos nos
+ *      encontramos con un menu similar al de Control Manual, pero esta vez deberemos presionar el Joystick para pasar a la configuracion de la siguiente
+ *      etapa. Si no se desea utilizar todas las etapas solo se ha de pulsar el Joystick hasta salir del modo. El brazo no se mueve durante este modo.
+ *    Iniciar Secuencia: Al seleccionar este modo, el brazo ejecuta la secuancia guardada anteriormente.
  *  
  *  Conexiones:
  *              LCD_I2C                     Joystick                HC 06
@@ -40,7 +53,7 @@ byte v;   //Variable auxiliar para Control y Guardar Secuencia
 byte vv;  //Variable auxiliar para Guardar Secuencia
 
 
-const char *Texto[7]={"Posicion Inicial","Coger Caja      ","Reposo          ","Control Total   ","Control Manual  ","GuardarSecuencia","RepetirSecuencia"};  //Modos de funcionamiento
+const char *Texto[7]={"Posicion Inicial","IniciarSecuencia","GuardarSecuencia","Control Total   ","Control Manual  ","Reposo          ","Coger Caja      "};  //Modos de funcionamiento
 const char *Miembro[7]={"Base            ","Hombro          ","Codo            ","M. Giro         ","M. Subir Bajar  ","Pinza           ","Velocidad       "};
 const char *MenuGuardar[6]={"Inicio: ","Etapa1: ","Etapa2: ","Etapa3: ","Etapa4: ","Final:  "};
 const char *textoAux; //Puntero auxiliar
@@ -64,14 +77,12 @@ void loop() {
     MenuModo();
   }
 
-//Posicion Inicial, Coger Caja o Repetir Secuencia
+//Posicion Inicial, Coger Caja o Iniciar Secuencia
   if (Ejecutando && (state<2 | state==6)){  
     BTSerial.write(state+200);
-    while (salir==false) {
-      Cargando(); 
-    }
+    while (!salir)  Cargando(); 
     byte vector[6]={180,180,180,180,180,180};
-    if (state != 6) for (int i=0;i<6;i++) posicion[i]=vector[i];
+    if (state != 2) for (int i=0;i<6;i++) posicion[i]=vector[i];
     else for (int i=0;i<6;i++) posicion[i]=posicionAux[i];
     lcd.setCursor(0,1);
     lcd.print("             ");
@@ -80,23 +91,22 @@ void loop() {
   }
 
 //Reposo
-  if (Ejecutando && state==2){  
+  if (Ejecutando && state==5){  
     BTSerial.write(state+200);
-    while (salir==false) {
-      Cargando(); 
-    }
+    while (!salir)  Cargando(); 
     lcd.setCursor(0,1);
     lcd.print("             ");
     while (Ejecutando) Reposo(); //Se ejecuta el ControlTotal hasta que se pulse el Joystick
-    byte vector[6]={180,180,180,180,180,180};
+    salir=false;
+    byte vector[6]={180,180,180,180,180,180}; //Vector al que quieres que vuelva
     for (int i=0;i<6;i++) posicion[i]=vector[i];
-    while (!digitalRead(boton)); //Elimina falsos positicos del boton
-  }
-
-//Control Total
-  if (Ejecutando && state==3){  
-    BTSerial.write(state+200);
-    while (Ejecutando) {ControlTotal=1; Control();} //Se ejecuta el ControlTotal hasta que se pulse el Joystick
+    //Mientras vuelve a su posicion:
+    lcd.setCursor(0,0);
+    lcd.print("Despertando     ");
+    lcd.setCursor(0,1);
+    lcd.print("Buenos Dias  :D ");
+    while (!salir)  if (BTSerial.available()) salir=BTSerial.read();  //Espera a recibir que está en la posicion
+    Iniciar();
   }
 
 //Control Manual
@@ -107,9 +117,16 @@ void loop() {
     lcd.print(Miembro[v]);
     while (Ejecutando) Control(); //Se ejecuta el ControlManual hasta que se pulse el Joystick
   }
+  
+//Control Total
+  if (Ejecutando && state==3){  
+    BTSerial.write(state+200);
+    while (Ejecutando) {ControlTotal=1; Control();} //Se ejecuta el ControlTotal hasta que se pulse el Joystick
+    for (int i=0; i<6; i++) posicion[i]=posicion[6];  //Guarda la posicion actual en posicion
+  }
 
 //Guardar secuencia
-  if (Ejecutando && state==5){  
+  if (Ejecutando && state==2){  
     BTSerial.write(state+200);
     //Imprime el menu de ControlManual
     lcd.setCursor(0,0);
@@ -311,11 +328,11 @@ void loop() {
   char ss[20];
   int Aux=map(analogRead(ejeY),1023,512,1,8);
   vector[v]++;
-  if (state!=5) BTSerial.write(vector[v]);
+  if (state!=2) BTSerial.write(vector[v]);  //Si no se encuentra en el estado de Guardar, envia el numero
   lcd.setCursor(A,1);
   sprintf(ss,"%03i",vector[v]);  //Pasamos la distancia a 3 digitos fijos
   lcd.print(ss);
-  if (v==6) lcd.print("%");
+  if (state==2 && v==6) lcd.print("%"); //Si se encuentra en el estado de guardar, en el factor de la velocidad
   else lcd.print(" ");
   delay(exp(Aux));
  }
@@ -324,11 +341,11 @@ void loop() {
   char ss[20];
   int Aux=map(analogRead(ejeY),0,512,1,8);
   vector[v]--;
-  if (state!=5) BTSerial.write(vector[v]);
+  if (state!=2) BTSerial.write(vector[v]);
   lcd.setCursor(A,1);
   sprintf(ss,"%03i",vector[v]);  //Pasamos la distancia a 3 digitos fijos
   lcd.print(ss);
-  if (v==6) lcd.print("%");
+  if (state==2 && v==6) lcd.print("%");
   else lcd.print(" ");
   delay(exp(Aux));
  }
