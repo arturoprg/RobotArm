@@ -30,6 +30,12 @@ Servo SPinza;   //Servomotor de la pinza
 bool salir;  //Condicion de salida de un modo
 
 byte posicion[7]={0,10,120,10,60,4,0}; //Posicion del brazo
+byte posicionGuardar[6][7]={{0,0,0,0,0,0,60},
+                            {0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0}};//Posicion guardada
  
 int state;   //Donde se guarda lo que se recibe por BT
 
@@ -93,83 +99,79 @@ void loop()
 }
 
 void PosicionInicial(){
-  byte vector[7]={180,180,180,180,180,180,180};
+  byte vector[6]={180,180,180,180,180,180};
   Serial.println("Posicion Inicial");
  
-  moverServos(vector);
+  moverServos(vector,10);
   
   BTSerial.write(1);  //Comunica que ha terminado
 }
 
 void CogerCaja(){
+  byte vector0[6]={180,180,180,180,180,180}; //Echarse para alante
+  byte vector1[6]={0,0,180,10,70,90};   //Coger
   Serial.println("Coger Caja");
-  delay(2000);  //Realiza la ejecucion
-  BTSerial.write(1);  //Comunica que ha terminado
+  moverServos(vector0,10);
+  moverServos(vector1,10);
+  PosicionInicial();
 }
 
 void Reposo(){
+  byte vector0[6]={0,0,0,0,0,0};
+  byte vector1[6]={180,180,180,180,180,180};
   Serial.println("Reposo");
-  delay(2000);  //Realiza la ejecucion
+  moverServos(vector0,10);
   BTSerial.write(1);  //Comunica que ha terminado
   while (salir==false)  //Mientras que no reciba que se ha pulsado el boton, se queda aqui
     if (BTSerial.available()) salir=BTSerial.read();
+  moverServos(vector1,10);
 }
 
 void ControlTotal(){
   Serial.println("Control Total");
-  Serial.println(posicion[6]);
+  //Movemos el brazo hasta la posicion que indique el control total
+  byte vector[6];
+  for (int i=0;i<6;i++) vector[i]=posicion[6];
+  moverServos(vector,10);
   while (salir==false){   //Mientras que no reciba que se ha pulsado el boton, se queda aqui
       if (BTSerial.available()){
         state=BTSerial.read();
 
         if (state<=180){  //Si el numero que recibe es menor de 180 es una posicion
         posicion[6]=state;
-        Serial.println(posicion[6]);
+        SBase.write(posicion[6]);
+        SHombro.write(posicion[6]);
+        SCodo.write(posicion[6]);
+        SMGiro.write(posicion[6]);
+        SMSB.write(posicion[6]);
+        SPinza.write(posicion[6]);
         }
         else salir=true;  //Si el numero que recibe es mayor de 180 sale de la funcion
       }
   }
+  for (int i=0;i<6;i++) posicion[i]=posicion[6];  //indicamos la posicion en la que se encuentra el brazo
 }
 
 void ControlManual(){
   byte v=0; //Indice del servo que se esta utilizando
-  Serial.println("Control Manual");
-  Serial.println(posicion[0]); //poner todos a su numero
+  Serial.println(posicion[0]);
+  Serial.println(posicion[1]);
+  Serial.println(posicion[2]);
+  Serial.println(posicion[3]);
+  Serial.println(posicion[4]);
+  Serial.println(posicion[5]);
   while (salir==false){   //Mientras que no reciba que se ha pulsado el boton, se queda aqui
      if (BTSerial.available()){
         state=BTSerial.read();
        if (state<=180){   //Si el numero que recibe es menor de 180 es una posicion
         posicion[v]=state;
         switch (v){   //Escribe en el servo correcto
-          case 0:
-          Serial.println("Base");
-          Serial.println(posicion[v]);
-            break;
-
-          case 1:
-          Serial.println("Hombro");
-            Serial.println(posicion[v]);
-            break;
-
-          case 2:
-          Serial.println("Codo");
-            Serial.println(posicion[v]);
-            break;
-
-          case 3:
-          Serial.println("M. Giro");
-            Serial.println(posicion[v]);
-            break;
-
-          case 4:
-          Serial.println("M. Subir Bajar");
-            Serial.println(posicion[v]);
-            break;
-
-          case 5:
-          Serial.println("Pinza");
-            Serial.println(posicion[v]);
-            break;
+          case 0: SBase.write(posicion[v]);  break;
+          case 1: SHombro.write(posicion[v]);  break;
+          case 2: SCodo.write(posicion[v]);  break;
+          case 3: SMGiro.write(posicion[v]); break;
+          case 4: SMSB.write(posicion[v]); break;
+          case 5:  SPinza.write(posicion[v]);  break;
        }
         
        }
@@ -180,44 +182,53 @@ void ControlManual(){
 }
   
 void GuardarSecuencia(){
+  byte Estado=0;
+  byte Miembro=0;
   Serial.println("Guardar Secuencia");
-  delay(2000);
-  BTSerial.write(1);
+  while (Estado<6){
+    if (BTSerial.available()){  //Cuando reciba un numero:
+      state=BTSerial.read();    //Guarda el numero recibido
+      posicionGuardar[Estado][Miembro]=state;
+      if (++Miembro==7){  //Cada vez que recibe un numero mueve una posicion de la matriz
+        Miembro=0;
+        Estado++;
+      }
+    }
+  }
 }
 
 void RepetirSecuencia(){
+  byte vector[6];
+  byte velocidad;
   Serial.println("Repetir Secuencia");
-  delay(2000);
+  for (int k=1;k<6;k++){
+    for (int j=0;j<6;j++) vector[j]=posicionGuardar[k][j];
+    velocidad=map(posicionGuardar[k][6],10,100,50,3);
+    Serial.println(velocidad);
+    moverServos(vector,velocidad);
+  }
   BTSerial.write(1);
+  for (int j=0;j<6;j++) posicion[j]=vector[j];
 }
 
-void moverServos(byte v[]){
-  byte desde[6];
-  byte hasta[6];
-  for (int i=0;i<6;i++){
-    desde[i]=posicion[i];
-    hasta[i]=v[i];
-  }
-  while(!compararArray(desde, hasta)){
-    Serial.println("while");
+void moverServos(byte hasta[],byte vel){
+  while(!compararArray(posicion, hasta)){
     for (int i=0; i<6;i++){
-      if (desde[i]!=hasta[i]){
-        if (desde[i]-hasta[i]<0)  desde[i]++;
-        if (desde[i]-hasta[i]>0)  desde[i]--;
+      if (posicion[i]!=hasta[i]){
+        if (posicion[i]-hasta[i]<0)  posicion[i]++;
+        if (posicion[i]-hasta[i]>0)  posicion[i]--;
         switch (i){
-          case 0: SBase.write(desde[i]);  break;
-          case 1: SHombro.write(desde[i]);  break;
-          case 2: SCodo.write(desde[i]);  break;
-          case 3: SMGiro.write(desde[i]); break;
-          case 4: SMSB.write(desde[i]); break;
-          case 5:  SPinza.write(desde[i]);  break;
+          case 0: SBase.write(posicion[i]);  break;
+          case 1: SHombro.write(posicion[i]);  break;
+          case 2: SCodo.write(posicion[i]);  break;
+          case 3: SMGiro.write(posicion[i]); break;
+          case 4: SMSB.write(posicion[i]); break;
+          case 5: SPinza.write(posicion[i]);  break;
         }
       }
+      delay(vel);
    }
  }
- for (int i=0;i<6;i++){
-    posicion[i]=hasta[i];
-  }
 } 
 
 boolean compararArray(byte array1[],byte array2[])
