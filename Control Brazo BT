@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// Proyecto Procesadores Integrados /////////////////////////////////////////////////////////////////////////////
 //////////////////// Control de Brazo robot // Brazo ////////////// By Arturo//////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /* Objetivo: Este programa sirve para mover el Brazo Robot
@@ -29,6 +29,7 @@ Servo SPinza;   //Servomotor de la pinza
 
 bool salir;  //Condicion de salida de un modo
 
+byte velNominal=4;  //Velocidad de las acciones
 byte posicion[7]={0,10,120,10,60,4,0}; //Posicion del brazo
 byte posicionGuardar[6][7]={{0,0,0,0,0,0,60},
                             {0,0,0,0,0,0,0},
@@ -66,35 +67,14 @@ void loop()
     salir=false;
     
     switch (state-200){       //Se le resta 200 ya que los numeros de los modos se envian a partir del 200
-      case 0:
-        PosicionInicial();    //Se ejecuta el modo de Posicion Inicial
-      break;
-
-      case 1:
-        CogerCaja();          //Se ejecuta el modo de Coger Caja
-      break;
-
-      case 2:
-        Reposo();             //Se ejecuta el modo de Reposo
-      break;
-
-      case 3:
-        ControlTotal();       //Se ejecuta el modo de Control Total
-      break;
-
-      case 4:
-        ControlManual();      //Se ejecuta el modo de Control Manual
-      break;
-
-      case 5:
-        GuardarSecuencia();   //Se ejecuta el modo de Guardar Secuencia
-      break;
-
-      case 6:
-        RepetirSecuencia();   //Se ejecuta el modo de Repetir Secuencia
-      break;
+      case 0: PosicionInicial();  break;  //Se ejecuta el modo de Posicion Inicial
+      case 1: IniciarSecuencia(); break;  //Se ejecuta el modo de Iniciar Secuencia
+      case 2: GuardarSecuencia(); break;  //Se ejecuta el modo de Guardar Secuencia
+      case 3: ControlTotal();     break;  //Se ejecuta el modo de Control Total
+      case 4: ControlManual();    break;  //Se ejecuta el modo de Control Manual
+      case 5: Reposo();           break;  //Se ejecuta el modo de Reposo 
+      case 6: CogerCaja();        break;  //Se ejecuta el modo de Coger Caja
     }
-    
   }
 }
 
@@ -102,7 +82,7 @@ void PosicionInicial(){
   byte vector[6]={180,180,180,180,180,180};
   Serial.println("Posicion Inicial");
  
-  moverServos(vector,10);
+  moverServos(vector,velNominal);
   
   BTSerial.write(1);  //Comunica que ha terminado
 }
@@ -111,8 +91,8 @@ void CogerCaja(){
   byte vector0[6]={180,180,180,180,180,180}; //Echarse para alante
   byte vector1[6]={0,0,180,10,70,90};   //Coger
   Serial.println("Coger Caja");
-  moverServos(vector0,10);
-  moverServos(vector1,10);
+  moverServos(vector0,velNominal);
+  moverServos(vector1,velNominal);
   PosicionInicial();
 }
 
@@ -120,47 +100,18 @@ void Reposo(){
   byte vector0[6]={0,0,0,0,0,0};
   byte vector1[6]={180,180,180,180,180,180};
   Serial.println("Reposo");
-  moverServos(vector0,10);
+  moverServos(vector0,velNominal);
   BTSerial.write(1);  //Comunica que ha terminado
-  while (salir==false)  //Mientras que no reciba que se ha pulsado el boton, se queda aqui
+  while (!salir)  //Mientras que no reciba que se ha pulsado el boton, se queda aqui
     if (BTSerial.available()) salir=BTSerial.read();
-  moverServos(vector1,10);
-}
-
-void ControlTotal(){
-  Serial.println("Control Total");
-  //Movemos el brazo hasta la posicion que indique el control total
-  byte vector[6];
-  for (int i=0;i<6;i++) vector[i]=posicion[6];
-  moverServos(vector,10);
-  while (salir==false){   //Mientras que no reciba que se ha pulsado el boton, se queda aqui
-      if (BTSerial.available()){
-        state=BTSerial.read();
-
-        if (state<=180){  //Si el numero que recibe es menor de 180 es una posicion
-        posicion[6]=state;
-        SBase.write(posicion[6]);
-        SHombro.write(posicion[6]);
-        SCodo.write(posicion[6]);
-        SMGiro.write(posicion[6]);
-        SMSB.write(posicion[6]);
-        SPinza.write(posicion[6]);
-        }
-        else salir=true;  //Si el numero que recibe es mayor de 180 sale de la funcion
-      }
-  }
-  for (int i=0;i<6;i++) posicion[i]=posicion[6];  //indicamos la posicion en la que se encuentra el brazo
+  moverServos(vector1,velNominal);
+  BTSerial.write(1);
 }
 
 void ControlManual(){
   byte v=0; //Indice del servo que se esta utilizando
-  Serial.println(posicion[0]);
-  Serial.println(posicion[1]);
-  Serial.println(posicion[2]);
-  Serial.println(posicion[3]);
-  Serial.println(posicion[4]);
-  Serial.println(posicion[5]);
-  while (salir==false){   //Mientras que no reciba que se ha pulsado el boton, se queda aqui
+  Serial.println("Control Manual");
+  while (!salir){   //Mientras que no reciba que se ha pulsado el boton, se queda aqui
      if (BTSerial.available()){
         state=BTSerial.read();
        if (state<=180){   //Si el numero que recibe es menor de 180 es una posicion
@@ -180,6 +131,31 @@ void ControlManual(){
      }
   }
 }
+
+void ControlTotal(){
+  Serial.println("Control Total");
+  //Movemos el brazo hasta la posicion que indique el control total
+  byte vector[6];
+  for (int i=0;i<6;i++) vector[i]=posicion[6];
+  moverServos(vector,velNominal);
+  while (!salir){   //Mientras que no reciba que se ha pulsado el boton, se queda aqui
+      if (BTSerial.available()){
+        state=BTSerial.read();
+
+        if (state<=180){  //Si el numero que recibe es menor de 180 es una posicion
+        posicion[6]=state;
+        SBase.write(posicion[6]);
+        SHombro.write(posicion[6]);
+        SCodo.write(posicion[6]);
+        SMGiro.write(posicion[6]);
+        SMSB.write(posicion[6]);
+        SPinza.write(posicion[6]);
+        }
+        else salir=true;  //Si el numero que recibe es mayor de 180 sale de la funcion
+      }
+  }
+  for (int i=0;i<6;i++) posicion[i]=posicion[6];  //indicamos la posicion en la que se encuentra el brazo
+}
   
 void GuardarSecuencia(){
   byte Estado=0;
@@ -197,10 +173,10 @@ void GuardarSecuencia(){
   }
 }
 
-void RepetirSecuencia(){
+void IniciarSecuencia(){
   byte vector[6];
   byte velocidad;
-  Serial.println("Repetir Secuencia");
+  Serial.println("Iniciar Secuencia");
   for (int k=1;k<6;k++){
     for (int j=0;j<6;j++) vector[j]=posicionGuardar[k][j];
     velocidad=map(posicionGuardar[k][6],10,100,50,3);
