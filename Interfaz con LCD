@@ -27,20 +27,22 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); //Configuramos la LCD
 #define ejeY A0
 #define boton 4
 
-bool B;
-bool ValorBoton;
-bool Ejecutando;
-bool ControlTotal;
-bool Z;
-bool salir;
+bool B; //Variable auxiliar para el boton
+bool Ejecutando;  //Indica si se esta ejecutando algun modo
+bool ControlTotal;  //Diferencia entre Control Total y Manual
+bool Z; //Variable auxiliar para Reposo
+bool salir; //Indica que se debe salir del modo en el que se encuentre
 
-byte posicion[7]={0,10,120,10,60,4,0};//Posicion de Control
+byte posicion[7]={0,10,120,10,60,4,0};//Posicion del brazo
+byte posicionAux[7]={0,0,0,0,0,0,60};//Posicion del auxiliar
 byte state; //Numero del modo en el que se encuentra
-byte v;
+byte v;   //Variable auxiliar para Control y Guardar Secuencia
+byte vv;  //Variable auxiliar para Guardar Secuencia
 
 
 const char *Texto[7]={"Posicion Inicial","Coger Caja      ","Reposo          ","Control Total   ","Control Manual  ","GuardarSecuencia","RepetirSecuencia"};  //Modos de funcionamiento
-const char *Miembro[6]={"Base            ","Hombro          ","Codo            ","M. Giro         ","M. Subir Bajar  ","Pinza           "};
+const char *Miembro[7]={"Base            ","Hombro          ","Codo            ","M. Giro         ","M. Subir Bajar  ","Pinza           ","Velocidad       "};
+const char *MenuGuardar[6]={"Inicio: ","Etapa1: ","Etapa2: ","Etapa3: ","Etapa4: ","Final:  "};
 const char *textoAux; //Puntero auxiliar
 const char *textoAux2; //Puntero auxiliar
 
@@ -62,12 +64,15 @@ void loop() {
     MenuModo();
   }
 
-//Posicion Inicial o Coger Caja
+//Posicion Inicial, Coger Caja o Repetir Secuencia
   if (Ejecutando && (state<2 | state==6)){  
     BTSerial.write(state+200);
     while (salir==false) {
       Cargando(); 
     }
+    byte vector[6]={180,180,180,180,180,180};
+    if (state != 6) for (int i=0;i<6;i++) posicion[i]=vector[i];
+    else for (int i=0;i<6;i++) posicion[i]=posicionAux[i];
     lcd.setCursor(0,1);
     lcd.print("             ");
     Iniciar();
@@ -83,6 +88,8 @@ void loop() {
     lcd.setCursor(0,1);
     lcd.print("             ");
     while (Ejecutando) Reposo(); //Se ejecuta el ControlTotal hasta que se pulse el Joystick
+    byte vector[6]={180,180,180,180,180,180};
+    for (int i=0;i<6;i++) posicion[i]=vector[i];
     while (!digitalRead(boton)); //Elimina falsos positicos del boton
   }
 
@@ -100,6 +107,18 @@ void loop() {
     lcd.print(Miembro[v]);
     while (Ejecutando) Control(); //Se ejecuta el ControlManual hasta que se pulse el Joystick
   }
+
+//Guardar secuencia
+  if (Ejecutando && state==5){  
+    BTSerial.write(state+200);
+    //Imprime el menu de ControlManual
+    lcd.setCursor(0,0);
+    lcd.print(Miembro[v]);
+    lcd.setCursor(0,1);
+    lcd.print(MenuGuardar[vv]);
+    for (int i=0; i<6;i++) posicionAux[i]=posicion[i];
+    while (Ejecutando) Guardar(); //Se ejecuta el ControlManual hasta que se pulse el Joystick
+  }
 }
 
  void MenuModo(){ //escribe en la LCD el Modo en el que se encuentra
@@ -109,7 +128,7 @@ void loop() {
     B=0;
   }
   
-  if(analogRead(ejeX)>=900){  //Cuando mueves el Joystick a la derecha se mueve a un estado anterior
+  if(analogRead(ejeX)<=124){  //Cuando mueves el Joystick a la derecha se mueve a un estado anterior
     textoAux2=Texto[state];
     if (state--==0) state=sizeof(Texto)/2-1;  //Si state es 0, se pone en el valor máximo del vector Modo, sino, reduce su valor
     textoAux=Texto[state];              //Guarda el texto del modo en el que esta para editarlo
@@ -123,7 +142,7 @@ void loop() {
      }
   }
   
-  if(analogRead(ejeX)<=124){  //Cuando mueves el Joystick a la izquierda se mueve a un estado posterior
+  if(analogRead(ejeX)>=900){  //Cuando mueves el Joystick a la izquierda se mueve a un estado posterior
     if (++state==(sizeof(Texto)/2)) state=0;  //Si state es el maximo, le da valor 0, sino, reduce aumenta su valor
     //Mueve el texto hacia la izquierda
     for (int i=16;i>=0;i--){
@@ -136,21 +155,21 @@ void loop() {
  
  void Control(){
   if(!ControlTotal){ //Control Manual
-    if(analogRead(ejeX)>=900){  //Cuando mueves el Joystick a la derecha se mueve a un estado anterior
+    if(analogRead(ejeX)<124){  //Cuando mueves el Joystick a la derecha se mueve a un estado anterior
       if (v--==0) v=5;
     lcd.setCursor(0,0);
     lcd.print(Miembro[v]);
     BTSerial.write(v+181);
-    while (analogRead(ejeX)>900) {}
+    while (analogRead(ejeX)<=124) {}
     }
   
-   if(analogRead(ejeX)<=124){ //Cuando mueves el Joystick a la derecha se mueve a un estado anterior
-      if (++v==6) v=0;
-    lcd.setCursor(0,0);
-    lcd.print(Miembro[v]);
-    BTSerial.write(v+181);
-    while (analogRead(ejeX)<124) {}
-    }
+    if(analogRead(ejeX)>=900){ //Cuando mueves el Joystick a la derecha se mueve a un estado anterior
+        if (++v==6) v=0;
+      lcd.setCursor(0,0);
+      lcd.print(Miembro[v]);
+      BTSerial.write(v+181);
+      while (analogRead(ejeX)>=900) {}
+      }
   }
   if (ControlTotal) v=6;  //Control Total
   char ss[20];
@@ -159,8 +178,8 @@ void loop() {
   lcd.print("Posicion: ");
   sprintf(ss,"%03i",posicion[v]);  //Pasamos la distancia a 3 digitos fijos
   lcd.print(ss);
-  while(analogRead(ejeY)>=562 && posicion[v]<180) AumentarY();
-  while(analogRead(ejeY)<=462 && posicion[v]>0) DisminuirY();
+  while(analogRead(ejeY)>=570 && posicion[v]<180) AumentarY(posicion,10);
+  while(analogRead(ejeY)<=462 && posicion[v]>0) DisminuirY(posicion,10);
 
   //Sale de ControlManual
   if (!digitalRead(boton)) B=1;
@@ -200,6 +219,66 @@ void loop() {
   Z=!Z;
  }
 
+ void Guardar(){
+   if(analogRead(ejeX)>=900){  //Cuando mueves el Joystick a la derecha se mueve a un estado anterior
+     if (v--==0) v=6;
+     if (vv==0 && v==6) v=5;
+     lcd.setCursor(0,0);
+     lcd.print(Miembro[v]);
+     while (analogRead(ejeX)>=900) {}
+   }
+   if(analogRead(ejeX)<=124){ //Cuando mueves el Joystick a la derecha se mueve a un estado anterior
+      if (++v==7) v=0;
+      if (vv==0 && v>=6) v=0;
+      lcd.setCursor(0,0);
+      lcd.print(Miembro[v]);
+      while (analogRead(ejeX)<=124) {}
+    }
+    
+    //Si se pulsa el boton pasa de etapa envia la etapa que acaba de configurar
+    if (!digitalRead(boton)) B=1;
+    if (B==1 && digitalRead(boton)){
+        vv++;
+        for (int i=0;i<7;i++){
+          BTSerial.write(posicionAux[i]);
+          delay(1);
+        }
+        lcd.setCursor(0,1);
+        lcd.print(MenuGuardar[vv]);
+        B=0;
+    }
+    
+    char ss[20];
+    //Aumenta o Disminuye la posicion
+    lcd.setCursor(8,1);
+    sprintf(ss,"%03i",posicionAux[v]);  //Pasamos la distancia a 3 digitos fijos
+    lcd.print(ss);
+    if (v==6) { //Si es la velocidad el rango de valores es entre 10 y 100
+      lcd.print("%");
+      while(analogRead(ejeY)>=570 && posicionAux[v]<100) AumentarY(posicionAux, 8);
+      while(analogRead(ejeY)<=462 && posicionAux[v]>10) DisminuirY(posicionAux, 8);
+    }
+    else {
+      lcd.print(" ");
+      while(analogRead(ejeY)>=570 && posicionAux[v]<180) AumentarY(posicionAux, 8);
+      while(analogRead(ejeY)<=462 && posicionAux[v]>0) DisminuirY(posicionAux, 8);
+    }
+    
+
+    //Sale de GuardarSecuencia
+    if (!digitalRead(boton) && vv>=5) B=1;
+    if (B==1 && digitalRead(boton) && vv>=5){
+      for (int i=0;i<7;i++){
+          BTSerial.write(posicionAux[i]);
+          delay(1);
+      }
+      ControlTotal=0;
+      v=0;
+      vv=0;
+      Iniciar();
+  }
+ }
+
  void Iniciar(){ //Puente entre un modo y el menu inicial
     lcd.setCursor(0,0);
     lcd.print(Texto[state]);
@@ -228,24 +307,28 @@ void loop() {
    }
  }
 
- void AumentarY(){  //Aumenta la posicion al levantar el eje Y
+ void AumentarY(byte vector[],byte A){  //Aumenta la posicion al levantar el eje Y
   char ss[20];
   int Aux=map(analogRead(ejeY),1023,512,1,8);
-  posicion[v]++;
-  BTSerial.write(posicion[v]);
-  lcd.setCursor(10,1);
-  sprintf(ss,"%03i",posicion[v]);  //Pasamos la distancia a 3 digitos fijos
+  vector[v]++;
+  if (state!=5) BTSerial.write(vector[v]);
+  lcd.setCursor(A,1);
+  sprintf(ss,"%03i",vector[v]);  //Pasamos la distancia a 3 digitos fijos
   lcd.print(ss);
+  if (v==6) lcd.print("%");
+  else lcd.print(" ");
   delay(exp(Aux));
  }
 
-  void DisminuirY(){  ////Disminuye la posicion al levantar el eje Y
+  void DisminuirY(byte vector[], byte A){  ////Disminuye la posicion al levantar el eje Y
   char ss[20];
   int Aux=map(analogRead(ejeY),0,512,1,8);
-  posicion[v]--;
-  BTSerial.write(posicion[v]);
-  lcd.setCursor(10,1);
-  sprintf(ss,"%03i",posicion[v]);  //Pasamos la distancia a 3 digitos fijos
+  vector[v]--;
+  if (state!=5) BTSerial.write(vector[v]);
+  lcd.setCursor(A,1);
+  sprintf(ss,"%03i",vector[v]);  //Pasamos la distancia a 3 digitos fijos
   lcd.print(ss);
+  if (v==6) lcd.print("%");
+  else lcd.print(" ");
   delay(exp(Aux));
  }
