@@ -57,6 +57,11 @@ void setup()
   Serial.begin(9600);
   Serial.println("Iniciado");
   
+  //Comprueba si estan enlazados los modulos BT
+  bool enlazado=false;
+  while(!enlazado) if (BTSerial.available()) enlazado=BTSerial.read();
+  BTSerial.write(1);
+  
 }
  
 void loop()
