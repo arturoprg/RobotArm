@@ -67,8 +67,11 @@ void setup() {
   //Iniciamos la LCD
   lcd.begin();
   lcd.backlight();
+  Conectar();
   lcd.setCursor(0,0);
   lcd.print(Texto[0]);
+  lcd.setCursor(0,1);
+  lcd.print("                ");
 }
 
 void loop() {
@@ -95,7 +98,7 @@ void loop() {
     BTSerial.write(state+200);
     while (!salir)  Cargando(); 
     lcd.setCursor(0,1);
-    lcd.print("             ");
+    lcd.print("                ");
     while (Ejecutando) Reposo(); //Se ejecuta el ControlTotal hasta que se pulse el Joystick
     salir=false;
     byte vector[6]={180,180,180,180,180,180}; //Vector al que quieres que vuelva
@@ -106,6 +109,7 @@ void loop() {
     lcd.setCursor(0,1);
     lcd.print("Buenos Dias  :D ");
     while (!salir)  if (BTSerial.available()) salir=BTSerial.read();  //Espera a recibir que está en la posicion
+    salir=false;
     Iniciar();
   }
 
@@ -296,6 +300,31 @@ void loop() {
   }
  }
 
+ void Conectar(){ //Comprueba si estan conectados los modulos BT
+  unsigned long tiempo;
+  
+  lcd.setCursor(0,0);
+  lcd.print("Por favor espere");
+  lcd.setCursor(0,1);
+  lcd.print("Conectando");
+  
+//Para comprobar si esta concetado manda un 1 cada medio segundo, el otro modulo al recibirlo debe
+//mandar otro 1 como respuesta, al recibir el 1 del otro modulo sabemos que estan concetados
+  while(!salir) {
+    lcd.setCursor(10,1);
+    for (int i=0; i<4; i++){
+      BTSerial.write(1);  //manda el 1
+      tiempo=millis();
+      while (millis()<= tiempo+500) if (BTSerial.available())salir=BTSerial.read(); //Comprueba si lo recibe
+      if (salir) break; //Si lo recibe sale del For
+      lcd.print(".");
+    }
+    lcd.setCursor(10,1);
+    lcd.print("    ");
+  }
+  salir=false;
+ }
+
  void Iniciar(){ //Puente entre un modo y el menu inicial
     lcd.setCursor(0,0);
     lcd.print(Texto[state]);
@@ -309,18 +338,13 @@ void loop() {
  void Cargando(){ //Puente entre el menu y un modo
    unsigned long tiempo;
    lcd.setCursor(0,1);
-   lcd.print("Ejecutando   ");
+   lcd.print("Ejecutando    ");
    lcd.setCursor(10,1);
-    for (byte i=0;i<3;i++){
+    for (byte i=0;i<4;i++){
       tiempo=millis();
-      while(millis()<tiempo+200)
+      while(millis()<tiempo+400)
         if (BTSerial.available()) salir=BTSerial.read();
-        
       lcd.print(".");
-      
-      tiempo=millis();
-      while(millis()<tiempo+200)
-        if (BTSerial.available()) salir=BTSerial.read();
    }
  }
 
