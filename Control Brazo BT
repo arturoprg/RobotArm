@@ -29,8 +29,8 @@ Servo SPinza;   //Servomotor de la pinza
 
 bool salir;  //Condicion de salida de un modo
 
-byte velNominal=4;  //Velocidad de las acciones
-byte posicion[7]={0,10,120,10,60,4,0}; //Posicion del brazo
+byte velNominal=2;  //Velocidad de las acciones
+byte posicion[7]={90,160,180,90,30,180,90}; //Posicion del brazo
 byte posicionGuardar[6][7]={{0,0,0,0,0,0,60},
                             {0,0,0,0,0,0,0},
                             {0,0,0,0,0,0,0},
@@ -51,16 +51,23 @@ void setup()
   SMSB.attach(10);
   SPinza.attach(11);
 
-  SBase.write(0);
+  SBase.write(90);
+  SHombro.write(160);
+  SCodo.write(180);
+  SMGiro.write(90);
+  SMSB.write(30);
+  SPinza.write(100);
   
   BTSerial.begin(9600);  //Comenzamos la conexion BT a una velocidad de 9600 Baudios
   Serial.begin(9600);
-  Serial.println("Iniciado");
+  
   
   //Comprueba si estan enlazados los modulos BT
   bool enlazado=false;
   while(!enlazado) if (BTSerial.available()) enlazado=BTSerial.read();
   BTSerial.write(1);
+  Serial.println("Iniciado");
+  PosicionInicial();
   
 }
  
@@ -84,7 +91,7 @@ void loop()
 }
 
 void PosicionInicial(){
-  byte vector[6]={180,180,180,180,180,180};
+  byte vector[6]={90,140,170,130,60,180};
   Serial.println("Posicion Inicial");
  
   moverServos(vector,velNominal);
@@ -93,7 +100,7 @@ void PosicionInicial(){
 }
 
 void CogerCaja(){
-  byte vector0[6]={180,180,180,180,180,180}; //Echarse para alante
+  byte vector0[6]={90,20,180,180,180,180}; //Echarse para alante
   byte vector1[6]={0,0,180,10,70,90};   //Coger
   Serial.println("Coger Caja");
   moverServos(vector0,velNominal);
@@ -102,14 +109,18 @@ void CogerCaja(){
 }
 
 void Reposo(){
-  byte vector0[6]={0,0,0,0,0,0};
-  byte vector1[6]={180,180,180,180,180,180};
+  byte vector0[6]={90,100,90,90,180,180};
+  byte vector1[6]={90,80,170,90,0,180};
+  byte vector2[6]={90,30,170,90,0,180};
   Serial.println("Reposo");
-  moverServos(vector0,velNominal);
+  moverServos(vector0,4);
+  moverServos(vector1,5);
+  moverServos(vector2,5);
+  Serial.println("Envia");
   BTSerial.write(1);  //Comunica que ha terminado
   while (!salir)  //Mientras que no reciba que se ha pulsado el boton, se queda aqui
     if (BTSerial.available()) salir=BTSerial.read();
-  moverServos(vector1,velNominal);
+  PosicionInicial();
   BTSerial.write(1);
 }
 
@@ -126,8 +137,8 @@ void ControlManual(){
           case 1: SHombro.write(posicion[v]);  break;
           case 2: SCodo.write(posicion[v]);  break;
           case 3: SMGiro.write(posicion[v]); break;
-          case 4: SMSB.write(posicion[v]); break;
-          case 5:  SPinza.write(posicion[v]);  break;
+          case 4: SMSB.write(map(posicion[v],0,180,10,180)); break;
+          case 5: SPinza.write(map(posicion[v],0,180,40,100));  break;
        }
         
        }
@@ -153,8 +164,8 @@ void ControlTotal(){
         SHombro.write(posicion[6]);
         SCodo.write(posicion[6]);
         SMGiro.write(posicion[6]);
-        SMSB.write(posicion[6]);
-        SPinza.write(posicion[6]);
+        SMSB.write(map(posicion[6],0,180,10,180));
+        SPinza.write(map(posicion[6],0,180,40,100));
         }
         else salir=true;  //Si el numero que recibe es mayor de 180 sale de la funcion
       }
@@ -184,7 +195,7 @@ void IniciarSecuencia(){
   Serial.println("Iniciar Secuencia");
   for (int k=1;k<6;k++){
     for (int j=0;j<6;j++) vector[j]=posicionGuardar[k][j];
-    velocidad=map(posicionGuardar[k][6],10,100,50,3);
+    velocidad=map(posicionGuardar[k][6],10,100,20,0);
     Serial.println(velocidad);
     moverServos(vector,velocidad);
   }
@@ -203,8 +214,8 @@ void moverServos(byte hasta[],byte vel){
           case 1: SHombro.write(posicion[i]);  break;
           case 2: SCodo.write(posicion[i]);  break;
           case 3: SMGiro.write(posicion[i]); break;
-          case 4: SMSB.write(posicion[i]); break;
-          case 5: SPinza.write(posicion[i]);  break;
+          case 4: SMSB.write(map(posicion[i],0,180,10,180)); break;
+          case 5: SPinza.write(map(posicion[i],0,180,40,100));  break;
         }
       }
       delay(vel);
