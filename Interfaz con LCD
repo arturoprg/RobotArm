@@ -46,7 +46,7 @@ bool ControlTotal;  //Diferencia entre Control Total y Manual
 bool Z; //Variable auxiliar para Reposo
 bool salir; //Indica que se debe salir del modo en el que se encuentre
 
-byte posicion[7]={0,10,120,10,60,4,0};//Posicion del brazo
+byte posicion[7]={90,160,180,90,30,180,90};//Posicion del brazo
 byte posicionAux[7]={0,0,0,0,0,0,60};//Posicion del auxiliar
 byte state; //Numero del modo en el que se encuentra
 byte v;   //Variable auxiliar para Control y Guardar Secuencia
@@ -68,6 +68,7 @@ void setup() {
   lcd.begin();
   lcd.backlight();
   Conectar();
+  Cargando();
   lcd.setCursor(0,0);
   lcd.print(Texto[0]);
   lcd.setCursor(0,1);
@@ -84,7 +85,7 @@ void loop() {
   if (Ejecutando && (state<2 | state==6)){  
     BTSerial.write(state+200);
     while (!salir)  Cargando(); 
-    byte vector[6]={180,180,180,180,180,180};
+    byte vector[6]={90,140,170,130,40,180};
     if (state != 2) for (int i=0;i<6;i++) posicion[i]=vector[i];
     else for (int i=0;i<6;i++) posicion[i]=posicionAux[i];
     lcd.setCursor(0,1);
@@ -94,6 +95,7 @@ void loop() {
   }
 
 //Reposo
+  salir=false;
   if (Ejecutando && state==5){  
     BTSerial.write(state+200);
     while (!salir)  Cargando(); 
