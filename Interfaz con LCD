@@ -63,8 +63,7 @@ const char *textoAux2; //Puntero auxiliar
 
 
 void setup() {
-  pinMode(boton,INPUT_PULLUP);
-  Serial.begin(9600);
+  pinMode(boton,INPUT_PULLUP);  //Iniciamos el boton con resistencia de Pull-Up
   BTSerial.begin(9600); //Comenzamos la conexion BT a una velocidad de 9600 Baudios
 
   //Iniciamos la LCD
