@@ -55,7 +55,7 @@ byte vv;  //Variable auxiliar para Guardar Secuencia
 unsigned int t=millis()/1000;
 
 const byte PosIn[6]={90,140,170,30,60,180}; //Posicion Inicial
-const char *Texto[9]={"Posicion Inicial","IniciarSecuencia","GuardarSecuencia","Control Total   ","Control Manual  ","Piedra,Papel,Tij","Reposo          ","Saludar         ","Coger Caja      "};  //Modos de funcionamiento
+const char *Texto[10]={"Posicion Inicial","IniciarSecuencia","GuardarSecuencia","Control Total   ","Control Manual  ","Piedra,Papel,Tij","Reposo          ","Bailar          ","Saludar         ","Coger Caja      "};  //Modos de funcionamiento
 const char *Miembro[7]={"Base            ","Hombro          ","Codo            ","M. Giro         ","M. Subir Bajar  ","Pinza           ","Velocidad       "};
 const char *MenuGuardar[6]={"Inicio: ","Etapa1: ","Etapa2: ","Etapa3: ","Etapa4: ","Final:  "};
 const char *textoAux; //Puntero auxiliar
@@ -88,7 +88,7 @@ void loop() {
   }
 
 //Posicion Inicial, Coger Caja, Saludar o Iniciar Secuencia
-  if (Ejecutando && (state<2 | state>6)){ 
+  if (Ejecutando && (state<2 | state>7)){ 
     if (state==0 && compararArray(posicion,PosIn)==true){ //Si se inicia Posicion Inicial y ya esta en la posicion Inicial
       lcd.setCursor(0,1);
       lcd.print("Ya esta en PosIn");
@@ -101,13 +101,23 @@ void loop() {
 
       if (state != 1) for (int i=0;i<6;i++) posicion[i]=PosIn[i]; //Indica que la posicion al final sera la posicion Inicial si no es IniciarSecuencia
       else for (int i=0;i<6;i++) posicion[i]=posicionAux[i];  //Si es Iniciar Secuencia, la posicion al final sera la ultima establecida en GuardarSecuencia
-      if (state==8) posicion[5]=0;  //Si se ejecuta Coger Caja , indicamos que la posicion al final sera la posicion Inicial pero con la pinza cerrada
+      if (state==9) posicion[5]=0;  //Si se ejecuta Coger Caja , indicamos que la posicion al final sera la posicion Inicial pero con la pinza cerrada
       lcd.setCursor(0,1);
       lcd.print("             ");
       Iniciar();
       if(state==1) for (int i=0;i<6;i++) posicion[i]=posicionAux[i];  //Se es Iniciar Secuencia cambia posicion por la ultima posicion de Guardar Secuencia
       salir=false;
     }
+  }
+
+//Bailar
+  if (Ejecutando && state==7){ 
+    BTSerial.write(state+200);
+    while(Ejecutando) Bailar();
+    while(!salir) Cargando();
+    Iniciar();
+    for (int i=0; i<6; i++) posicion[i]=posicion[6];
+    salir=false;
   }
   
 //Reposo
@@ -208,6 +218,39 @@ void loop() {
       }
       t=millis()/1000;  //Reinicia el tiempo para entrar en Espera
     }
+ }
+
+ void Bailar(){
+  unsigned long tiempo;
+  while(!salir){
+    lcd.setCursor(0,1);
+    lcd.print("()()()()()()()()");
+    tiempo=millis();
+    //Espera 500ms
+    tiempo=millis();
+    while(millis()<tiempo+500){
+      if (!digitalRead(boton)) B=1;   //Si se pulsa el boton sale
+        if (B==1 && digitalRead(boton)){
+          BTSerial.write(255);
+          salir=true;
+          break;
+        }
+    } 
+    lcd.setCursor(0,1);
+    lcd.print(")()()()()()()()(");
+    //Espera 500ms
+    tiempo=millis();
+    while(millis()<tiempo+500){
+      if (!digitalRead(boton)) B=1; //Si se pulsa el boton sale
+        if (B==1 && digitalRead(boton)){
+          BTSerial.write(255);
+          salir=true;
+          Iniciar();
+          break;
+        }
+    }
+  }
+  salir=false;
  }
 
  void Reposo(){
