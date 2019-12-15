@@ -86,8 +86,9 @@ void loop()
       case 4: ControlManual();    break;  //Se ejecuta el modo de Control Manual
       case 5: PPT();              break;  //Se ejecuta el modo de Piedra Papel Tijera
       case 6: Reposo();           break;  //Se ejecuta el modo de Reposo 
-      case 7: Saludar();          break;  //Se ejecuta el modo de Saludar
-      case 8: CogerCaja();        break;  //Se ejecuta el modo de Coger Caja
+      case 7: Bailar();           break;   //Se ejecuta el modo de Bailar
+      case 8: Saludar();          break;  //Se ejecuta el modo de Saludar
+      case 9: CogerCaja();        break;  //Se ejecuta el modo de Coger Caja
       case 53:Espera();           break;  //Entra en espera por permanecer inactivo
       case 54:Desconectado();     break;  //Este caso se da si el brazo cree que esta conectado pero el mando esta buscando conectarse al brazo
     }
@@ -100,15 +101,48 @@ void PosicionInicial(){
 }
 
 void CogerCaja(){
-  byte vector0[6]={90,0,100,30,180,180}; //Echarse hacia delante
+  byte vector0[6]={70,0,100,30,180,180}; //Echarse hacia delante
   byte vector1[6]={90,0,100,30,180,0};   //Coger
-  byte vector2[6]={90,140,170,30,60,0};   //Volver al inicio
-
+  byte vector2[6]={90,140,170,30,60,0}; //Volver al inicio 
+  
+  byte vector3[6]={110,70,100,30,80,180};
   moverServos(vector0,velNominal);
   moverServos(vector1,velNominal);
   delay(1000);
   moverServos(vector2,velNominal);
   BTSerial.write(1);  //Comunica que ha terminado
+}
+
+void Bailar(){
+  bool marca=0;
+  byte vector0[6]={70,180,180,0,0,0}; //Abajo derecha
+  byte vector1[6]={70,100,100,30,80,180};   //Arriba derecha
+  byte vector2[6]={110,180,180,60,0,0};    //Abajo izquierda
+  byte vector3[6]={110,100,100,30,80,180};    //Arriba izquierda
+  byte vector4[6]={90,90,50,30,110,180};    //Rock arriba
+  byte vector5[6]={90,100,70,30,10,180};    //Rock abajo
+  while(!salir){
+    for(int i=0;i<2;i++){
+      if(BTSerial.available()) {
+        salir=BTSerial.read();
+        break;
+      }
+      if(!marca){
+        moverServos(vector0,80);
+        moverServos(vector1,90);
+        moverServos(vector2,80);
+        moverServos(vector3,90);
+      }
+      if(marca){
+        moverServos(vector4,60);
+        moverServos(vector5,90);
+        moverServos(vector4,60);
+        moverServos(vector5,90);
+      }
+    }
+  marca=!marca;
+  }
+  PosicionInicial();
 }
 
 void Saludar(){
