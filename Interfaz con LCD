@@ -143,17 +143,12 @@ void loop() {
     for (int i=0;i<6;i++) posicion[i]=PosIn[i]; //Indica q tras realizar esta accion la posicion sera la posicion Inicial
     PPT();  //Realiza Piedra, Papel o Tijera
     salir=false;
-    while(Ejecutando){  //Si se pulsa el boton, vuelve al menu inicial
-      if (!digitalRead(boton)) B=1;
-      if (B==1 && digitalRead(boton)){
-        Iniciar();
-        BTSerial.write(255);
-      }
-    }
+    delay(2000);
     while (!salir)  Cargando(); //Espera mientras se coloca en la posicion Inicial
     lcd.setCursor(0,1);
     lcd.print("                ");
     salir=false;
+    Iniciar();
   }
 //Control Manual
   if (Ejecutando && state==4){  
@@ -415,6 +410,8 @@ void loop() {
       TextoSecuencia("Inicia secuencia");
       if (!lado && B) {
         BTSerial.write(201);
+        delay(10);
+        BTSerial.write(w);
         while (!salir)  Cargando(); //Espera a que llegue a su posicion
         salir=false;
 
