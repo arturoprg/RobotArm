@@ -62,6 +62,7 @@ const byte PosIn[6]={90,140,170,30,60,180}; //Posicion Inicial
 
 void setup() 
 {
+  Serial.begin(9600);
   for(int i=0;i<3;i++) memoriaVacia[i]=EEPROM.read(i);  //Comprueba que memorias estan en uso
   
 //Configuramos los servos a una posicion inicial conocida
@@ -195,9 +196,7 @@ void PPT(){ //Realiza tres sacudidas seguidas del movimiento de piedra, papel o 
   if(aleatorio==2) moverServos(papel,95);   //Si es 2 sale papel
   if(aleatorio==3) moverServos(tijera,95);  //Si es 3 sale tijera
   BTSerial.write(1);  //Comunica que ha terminado
-
-  while (!salir)  if (BTSerial.available()) salir=BTSerial.read();
-  salir=false;
+  delay(2000);
   PosicionInicial();
 }
 
@@ -332,10 +331,14 @@ void IniciarSecuencia(){  //Realiza una secuencia
   byte w;   //Secuencia que se realiza (1, 2 o 3)
   int contador=0;
 
+//Lee la memoria a ejecutar
+  while(!salir) if(BTSerial.available()) {w=BTSerial.read(); salir=1;}
+  salir=0;
 //Saca de la EEPROM la Secuencia a realizar
   for (int i=0;i<6;i++){
     for (int j=0;j<7;j++) {
       posicionGuardar[i][j]=EEPROM.read(indiceMemoria[w]+contador);
+      Serial.println(posicionGuardar[i][j]);
       contador++;
     }
   }
