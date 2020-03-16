@@ -1,0 +1,75 @@
+////////////////////////////////////////// Codigo base para realizar secuencias con el brazo/////////////////////////////////////////////
+/*
+ * Conexiones:
+ *              Servos                        
+ *                    Base        -> 3       
+ *                    Hombro      -> 5       
+ *                    Codo        -> 6
+ *                    Muñeca Giro -> 9
+ *                    Muñeca S B  -> 10
+ *                    Pinza       -> 11
+ */
+
+#include <Servo.h>           //Biblioteca para Servos
+
+Servo SBase;    //Servomotor de la base
+Servo SHombro;  //Servomotor del hombro
+Servo SCodo;    //Servomotor del codo
+Servo SMGiro;   //Servomotor de la muñeca para giro
+Servo SMSB;     //Servomotor de la muñeca para subir y bajar
+Servo SPinza;   //Servomotor de la pinza
+
+byte posicion[7]={90,160,180,0,30,180,90}; //Registra la posicion actual del brazo
+
+void setup() 
+{
+//Configuramos los servos a una posicion inicial conocida
+  SBase.attach(3);
+  SHombro.attach(5);
+  SCodo.attach(6);
+  SMGiro.attach(9);
+  SMSB.attach(10);
+  SPinza.attach(11);
+
+//Iniciamos los servos en una posicion
+  SBase.write(90);
+  SHombro.write(160);
+  SCodo.write(180);
+  SMGiro.write(0);
+  SMSB.write(30);
+  SPinza.write(100);
+}
+
+void loop(){
+  //byte vector(90,90,90,90,90,90);   //defines el vector de posiciones finales
+  //moverServos(vector,60);           //mueves los servos a esas posiciones a velocidad 60 de 100
+}
+
+
+//Mueve todos los servos simultaneamente desde la posicion actual hasta la indicada a una velocidad
+void moverServos(byte hasta[],byte vel){  
+  while(!compararArray(posicion, hasta)){ //Mientras la posicion actual y final no sean iguales:
+    for (int i=0; i<6;i++){
+      if (posicion[i]!=hasta[i]){
+        if (posicion[i]-hasta[i]<0)  posicion[i]++;
+        if (posicion[i]-hasta[i]>0)  posicion[i]--;
+        switch (i){ //Va realizando la escritura de cada servo con cada pasada
+          case 0: SBase.write(posicion[i]);  break;
+          case 1: SHombro.write(posicion[i]);  break;
+          case 2: SCodo.write(posicion[i]);  break;
+          case 3: SMGiro.write(posicion[i]); break;
+          case 4: SMSB.write(map(posicion[i],0,180,10,180)); break;
+          case 5: SPinza.write(map(posicion[i],0,180,40,100));  break;
+        }
+      }
+      //La velocidad se establece con la espera entre cada incremento/decremento (max 5ms, min 10us)
+      delayMicroseconds(map(vel,10,100,5000,10)); 
+   }
+ }
+} 
+
+boolean compararArray(byte array1[],byte array2[]){ //Comprueba si los 6 primeros elementos de dos vectores son iguales
+ for (int j=0;j<6;j++)
+    if(array1[j] != array2[j])return(false);
+ return(true);
+}
